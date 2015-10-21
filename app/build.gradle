@@ -25,6 +25,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.0.0'
     compile 'com.android.support:design:23.0.0'
     compile 'com.github.dexafree:materiallist:3.0.1'
+    compile project(':dlib')
 }
 apply plugin: 'com.android.application'
 apply plugin: 'com.jakewharton.hugo'

@@ -14,6 +14,11 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 ![](demo/demo1.png)
 ![](demo/demo2.png)
 
+### Build jniLibs
+Build shared library from [dlib-android](https://github.com/tzutalin/dlib-android)
+
+Copy the shared libray to ./dlib/src/main/jniLibs/
+
 
 ###License
 `Copyright 2015 TzuTa Lin`

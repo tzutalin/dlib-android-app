@@ -11,11 +11,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -25,9 +23,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.dexafree.materialList.card.Card;
@@ -138,29 +136,20 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
 
-            if (path.endsWith("bmp") == true) {
-                List<VisionDetRet> faceList = peopleDet.detFace(path);
-                if (faceList.size() > 0) {
-                    Card card = new Card.Builder(MainActivity.this)
-                            .withProvider(BigImageCardProvider.class)
-                            .setDrawable(drawRect(path, faceList, Color.GREEN))
-                            .setTitle("Face det")
-                            .endConfig()
-                            .build();
-                    cardrets.add(card);
-                } else {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
+            List<VisionDetRet> faceList = peopleDet.detFace(path);
+            if (faceList.size() > 0) {
+                Card card = new Card.Builder(MainActivity.this)
+                        .withProvider(BigImageCardProvider.class)
+                        .setDrawable(drawRect(path, faceList, Color.GREEN))
+                        .setTitle("Face det")
+                        .endConfig()
+                        .build();
+                cardrets.add(card);
             } else {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(getApplicationContext(), "Only support BMP now", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
                     }
                 });
             }

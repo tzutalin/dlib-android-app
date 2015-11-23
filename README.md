@@ -19,6 +19,8 @@ Build shared library from [dlib-android](https://github.com/tzutalin/dlib-androi
 
 Copy the shared libray to ./dlib/src/main/jniLibs/
 
+### Try directly
+`$ adb install demo/app-debug.apk`
 
 ###License
 `Copyright 2015 TzuTa Lin`

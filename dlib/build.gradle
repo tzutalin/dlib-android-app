@@ -16,7 +16,7 @@ android {
         jni.srcDirs = [] //disable automatic ndk-build call
     }
     task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
-        commandLine "/home/darrenl/tools/android-ndk-r10e/ndk-build",
+        commandLine "ndk-build",
                 'NDK_PROJECT_PATH=build/intermediates/ndk',
                 'NDK_LIBS_OUT=src/main/jniLibs',
                 'APP_BUILD_SCRIPT=src/main/dlib/jni/Android.mk',

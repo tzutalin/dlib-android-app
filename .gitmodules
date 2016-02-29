@@ -1,3 +1,0 @@
-[submodule "dlib/src/main/dlib"]
-	path = dlib/src/main/dlib
-	url = https://github.com/tzutalin/dlib-android

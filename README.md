@@ -7,10 +7,13 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 
 
 ###Grap the source
+$ git clone --recursive https://github.com/tzutalin/dlib-android-app.git`
 
-`$ git clone https://github.com/tzutalin/dlib-android-app`
+or
 
-`$ git submodule update --init --recursive`
+`$ git clone https://github.com/tzutalin/dlib-android-app.git`
+
+`$ cd dlib-androida-app; git submodule update --init --recursive`
 
 ### Features
 * Support dlib HOG detector

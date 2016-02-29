@@ -7,7 +7,7 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 
 
 ###Grap the source
-$ git clone --recursive https://github.com/tzutalin/dlib-android-app.git`
+$ git clone --recursive https://github.com/tzutalin/dlib-android-app.git
 
 or
 

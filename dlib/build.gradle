@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 apply plugin: 'com.android.library'
 
 android {
@@ -16,7 +18,7 @@ android {
         jni.srcDirs = [] //disable automatic ndk-build call
     }
     task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
-        commandLine "ndk-build",
+        commandLine NDKCommand(),
                 'NDK_PROJECT_PATH=build/intermediates/ndk',
                 'NDK_LIBS_OUT=src/main/jniLibs',
                 'APP_BUILD_SCRIPT=src/main/dlib/jni/Android.mk',
@@ -39,4 +41,54 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.0.0'
+}
+
+
+
+// call regular ndk-build(.cmd) script from app directory
+def GetNDKDir()  {
+    def localProperties = new Properties()
+
+    def NDK_SEARCH_VARS = ['ANDROID_NDK_HOME', 'ANDROID_NDK_ROOT', 'NDKROOT', 'NDKHOME']
+    def ndk_path = null
+
+    def lim = (Os.isFamily(Os.FAMILY_WINDOWS)) ? '\\' : '/'
+
+    // Search Local.Properties file
+    try {
+        localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+        def ndkDir = localProperties.getProperty('ndk.dir')
+        ndk_path = ndkDir != null ? ndkDir + lim : null;
+    } catch (java.io.FileNotFoundException e) {
+        println 'local.properties file not found'
+    }
+
+    // Search env var
+    if (ndk_path == null){
+        for (String var : NDK_SEARCH_VARS) {
+            def v = System.getenv(var)
+
+            if (v != null) {
+                ndk_path = v + lim
+                println "found in System Environment *$var = " + ndk_path
+                break
+            }
+        }
+    } else {
+        println 'found in local.properties *NDK_PATH = ' + ndk_path
+    }
+
+    if (ndk_path == null) {
+        println 'No NDK_PATH found'
+        ndk_path = ''
+    }
+    return ndk_path
+}
+
+def NDKCommand() {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        return GetNDKDir() + "ndk-build.cmd"
+    } else {
+        return GetNDKDir() + "ndk-build"
+    }
 }

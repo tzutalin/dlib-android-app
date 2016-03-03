@@ -31,11 +31,13 @@ You can build shared library from [dlib-android](https://github.com/tzutalin/dli
 
 Copy the shared libray to ./dlib/src/main/jniLibs/
 
-* Use IDE to build
+* Use AndroidStduio to build(Important!!)
 
-If you want to build it using Andriod studio, you need to specify your NDK path in dlib/build.gradle
+If you want to build it using Andriod studio, you need to specify your NDK path in your local.properties:
 
-`commandLine "/home/darrenl/tools/android-ndk-r10e/ndk-build"`
+Add ndk.dir=[YOUR_NDK_FOLDER] in local.prperties like
+
+`ndk.dir=/home/darrenl/tools/android-ndk-r10e`
 
 ### Try directly
 `$ adb install demo/app-debug.apk`

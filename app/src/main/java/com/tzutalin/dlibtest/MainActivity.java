@@ -31,9 +31,11 @@ import android.widget.Toast;
 import com.dexafree.materialList.card.Card;
 import com.dexafree.materialList.card.provider.BigImageCardProvider;
 import com.dexafree.materialList.view.MaterialListView;
+import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected List<Card> doInBackground(String... strings) {
+            final String targetPath = Constants.getFaceShapeModelPath();
+            if (!new File(targetPath).exists())
+                FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
+
             String path = strings[0];
             Log.d(TAG, "Image path: " + path);
             List<Card> cardrets = new ArrayList<>();
@@ -175,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         Bitmap bm = BitmapFactory.decodeFile(path, options);
         android.graphics.Bitmap.Config bitmapConfig = bm.getConfig();
         // set default bitmap config if none
-        if(bitmapConfig == null) {
+        if (bitmapConfig == null) {
             bitmapConfig = android.graphics.Bitmap.Config.ARGB_8888;
         }
         // resource bitmaps are imutable,
@@ -186,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         int width = bm.getWidth();
         int height = bm.getHeight();
         // By ratio scale
-        float aspectRatio = bm.getWidth() /(float) bm.getHeight();
+        float aspectRatio = bm.getWidth() / (float) bm.getHeight();
 
         final int MAX_SIZE = 512;
         int newWidth = MAX_SIZE;
@@ -196,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
         if (bm.getWidth() > MAX_SIZE && bm.getHeight() > MAX_SIZE) {
             Log.d(TAG, "Resize Bitmap");
             bm = getResizedBitmap(bm, newWidth, newHeight);
-            resizeRatio = (float)bm.getWidth() / (float)width;
+            resizeRatio = (float) bm.getWidth() / (float) width;
             Log.d(TAG, "resizeRatio " + resizeRatio);
         }
 
@@ -226,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
             if (requestCode == RESULT_LOAD_IMG && resultCode == RESULT_OK && null != data) {
                 // Get the Image from data
                 Uri selectedImage = data.getData();
-                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                String[] filePathColumn = {MediaStore.Images.Media.DATA};
                 // Get the cursor
                 Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
                 cursor.moveToFirst();

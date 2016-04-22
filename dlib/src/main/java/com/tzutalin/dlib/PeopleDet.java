@@ -19,10 +19,14 @@ package com.tzutalin.dlib;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import hugo.weaving.DebugLog;
 
 /**
  * Created by Tzutalin on 2015/10/20.
@@ -43,7 +47,9 @@ public class PeopleDet {
 
     protected Context mContext;
 
+    @DebugLog
     @Nullable
+    @WorkerThread
     public List<VisionDetRet> detPerson(@NonNull final String path) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
         int size = jniOpencvHOGDetect(path);
@@ -61,15 +67,25 @@ public class PeopleDet {
         return ret;
     }
 
+    @DebugLog
     @Nullable
+    @WorkerThread
     public List<VisionDetRet> detFace(@NonNull final String path) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
-        int size = jniDLibHOGDetect(path);
+        String landmarkPath = "";
+        // If landmark exits in sdcard, then use it
+        if (new File(Constants.getFaceShapeModelPath()).exists()) {
+            landmarkPath = Constants.getFaceShapeModelPath();
+        }
+
+        int size = jniDLibHOGFaceDetect(path, landmarkPath);
         for (int i = 0; i != size; i++) {
-            VisionDetRet det = new VisionDetRet();
-            int success = jniGetDLibRet(det, i);
+           VisionDetRet det = new VisionDetRet();
+            int success = jniGetDLibHOGFaceRet(det, i);
             if (success >= 0) {
                 Log.d(TAG, "detFace rect " + det.toString());
+                // TODO: Parse
+
                 ret.add(det);
             }
         }
@@ -94,9 +110,12 @@ public class PeopleDet {
 
     private native int jniGetOpecvHOGRet(VisionDetRet det, int index);
 
-    private native int jniDLibHOGDetect(String path);
+    private native int jniDLibHOGDetect(String path, String svmModelPath);
 
-    private native int jniGetDLibRet(VisionDetRet det, int index);
+    private native int jniGetDLibHOGRet(VisionDetRet det, int index);
 
+    private native int jniDLibHOGFaceDetect(String path, String landmarkModelPath);
+
+    private native int jniGetDLibHOGFaceRet(VisionDetRet det, int index);
 
 }

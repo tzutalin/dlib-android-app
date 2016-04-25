@@ -1,5 +1,7 @@
 ## dlib-android-app
 
+[![Build Status](https://travis-ci.org/tzutalin/dlib-android-app.png)](https://travis-ci.org/tzutalin/dlib-android-app)
+
 See http://dlib.net for the main project documentation.
 
 See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer to dlib-android/jni/jnilib_ex
@@ -19,6 +21,7 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 ### Demo
 ![](demo/demo1.png)
 ![](demo/demo2.png)
+![](demo/demo3.png)
 
 ### Build
 
@@ -47,6 +50,10 @@ Copy the shared libray to ./dlib/src/main/jniLibs/
 ### Try directly
 
 `$ adb install demo/app-debug.apk`
+
+or 
+
+Download and import dlib-debug.aar to AndroidStudio
 
 ###License
 `Copyright 2015 TzuTa Lin`

@@ -45,9 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
     private static final String TAG = "MainActivity";
     // UI
-    MaterialListView mListView;
-
-    private String mTestImgPath = null;
+    private MaterialListView mListView;
+    private String mTestImgPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
             // Create intent to Open Image applications like Gallery, Google Photos
             Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+            Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @DebugLog
-    private BitmapDrawable drawRect(String path, List<VisionDetRet> retlist, int color) {
+    private BitmapDrawable drawRect(String path, List<VisionDetRet> results, int color) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
         Bitmap bm = BitmapFactory.decodeFile(path, options);
@@ -187,8 +187,6 @@ public class MainActivity extends AppCompatActivity {
         // resource bitmaps are imutable,
         // so we need to convert it to mutable one
         bm = bm.copy(bitmapConfig, true);
-
-
         int width = bm.getWidth();
         int height = bm.getHeight();
         // By ratio scale
@@ -213,13 +211,29 @@ public class MainActivity extends AppCompatActivity {
         paint.setStrokeWidth(2);
         paint.setStyle(Paint.Style.STROKE);
         // Loop result list
-        for (VisionDetRet ret : retlist) {
+        for (VisionDetRet ret : results) {
             Rect bounds = new Rect();
             bounds.left = (int) (ret.getLeft() * resizeRatio);
             bounds.top = (int) (ret.getTop() * resizeRatio);
             bounds.right = (int) (ret.getRight() * resizeRatio);
             bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+
             canvas.drawRect(bounds, paint);
+
+            String label = ret.getLabel();
+            // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
+            Log.d(TAG, "drawRect: label->" + label);
+            if (label.startsWith("face_landmarks ")) {
+                String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
+                for (String landmarkStr : landmarkStrs) {
+                    String[] xyStrs = landmarkStr.split(",");
+                    int pointX = Integer.parseInt(xyStrs[0]);
+                    int pointY = Integer.parseInt(xyStrs[1]);
+                    pointX = (int) (pointX * resizeRatio);
+                    pointY = (int) (pointY * resizeRatio);
+                    canvas.drawCircle(pointX, pointY, 2, paint);
+                }
+            }
         }
 
         return new BitmapDrawable(getResources(), bm);

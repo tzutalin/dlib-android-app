@@ -83,9 +83,6 @@ public class PeopleDet {
            VisionDetRet det = new VisionDetRet();
             int success = jniGetDLibHOGFaceRet(det, i);
             if (success >= 0) {
-                Log.d(TAG, "detFace rect " + det.toString());
-                // TODO: Parse
-
                 ret.add(det);
             }
         }

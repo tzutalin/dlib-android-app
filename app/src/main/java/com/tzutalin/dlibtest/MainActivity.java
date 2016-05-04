@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -41,12 +42,19 @@ import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
 
+@EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
     private static final int RESULT_EXTERNAL_STORAGE = 2;
@@ -59,29 +67,20 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    protected String mTestImgPath;
     // UI
-    private MaterialListView mListView;
-    private String mTestImgPath;
+    @ViewById(R.id.material_listview)
+    protected MaterialListView mListView;
+    @ViewById(R.id.fab)
+    protected FloatingActionButton mFabActionBt;
+    @ViewById(R.id.toolbar)
+    protected Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         mListView = (MaterialListView) findViewById(R.id.material_listview);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Pick one image", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-
-                Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
-            }
-        });
+        setSupportActionBar(mToolbar);
 
         // Just use hugo to print log
         isExternalStorageWritable();
@@ -89,33 +88,18 @@ public class MainActivity extends AppCompatActivity {
 
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-        if (currentapiVersion >= Build.VERSION_CODES.M && verifyStoragePermissions(this) ) {
+        if (currentapiVersion >= Build.VERSION_CODES.M && verifyStoragePermissions(this)) {
             verifyStoragePermissions(this);
         }
 
         demo();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    @Click({R.id.fab})
+    void launchGallery() {
+        Toast.makeText(MainActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
     }
 
     /**
@@ -139,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
             );
             return false;
         } else {
-            return  true;
+            return true;
         }
     }
 
@@ -165,11 +149,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @DebugLog
-    private void demo() {
+    protected void demo() {
         if (mTestImgPath != null) {
             Log.d(TAG, "demo() launch a task to det");
-            DetTask task = new DetTask();
-            task.execute(mTestImgPath);
+            runDetectAsync(mTestImgPath);
         } else {
             Log.d(TAG, "demo() mTestImgPath is null, go to gallery");
             Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
@@ -179,87 +162,119 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        try {
+            // When an Image is picked
+            if (requestCode == RESULT_LOAD_IMG && resultCode == RESULT_OK && null != data) {
+                // Get the Image from data
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                // Get the cursor
+                Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                mTestImgPath = cursor.getString(columnIndex);
+                cursor.close();
+                if (mTestImgPath != null) {
+                    runDetectAsync(mTestImgPath);
+                    Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
+                }
+            } else if (requestCode == RESULT_EXTERNAL_STORAGE) {
+                demo();
+            } else {
+                Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
+        }
+    }
+
     // ==========================================================
     // Tasks inner class
     // ==========================================================
-    private class DetTask extends AsyncTask<String, Void, List<Card>> {
-        private ProgressDialog mmDialog;
+    private ProgressDialog mDialog;
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mmDialog = ProgressDialog.show(MainActivity.this, "Wait", "Person and face detection", true);
+    @Background
+    @NonNull
+    protected void runDetectAsync(@NonNull String path) {
+        showDiaglog();
+
+        final String targetPath = Constants.getFaceShapeModelPath();
+        if (!new File(targetPath).exists()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
+                }
+            });
+            FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
         }
 
-        @Override
-        protected List<Card> doInBackground(String... strings) {
-            final String targetPath = Constants.getFaceShapeModelPath();
-            if (!new File(targetPath).exists()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
-                    }
-                });
-                FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
-            }
-
-            String path = strings[0];
-            Log.d(TAG, "Image path: " + path);
-            List<Card> cardrets = new ArrayList<>();
-            PeopleDet peopleDet = new PeopleDet();
-            List<VisionDetRet> personList = peopleDet.detPerson(path);
-            if (personList.size() > 0) {
-                Card card = new Card.Builder(MainActivity.this)
-                        .withProvider(BigImageCardProvider.class)
-                        .setDrawable(drawRect(path, personList, Color.BLUE))
-                        .setTitle("Person det")
-                        .endConfig()
-                        .build();
-                cardrets.add(card);
-            } else {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-            List<VisionDetRet> faceList = peopleDet.detFace(path);
-            if (faceList.size() > 0) {
-                Card card = new Card.Builder(MainActivity.this)
-                        .withProvider(BigImageCardProvider.class)
-                        .setDrawable(drawRect(path, faceList, Color.GREEN))
-                        .setTitle("Face det")
-                        .endConfig()
-                        .build();
-                cardrets.add(card);
-            } else {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-            return cardrets;
+        Log.d(TAG, "Image path: " + path);
+        List<Card> cardrets = new ArrayList<>();
+        PeopleDet peopleDet = new PeopleDet();
+        List<VisionDetRet> personList = peopleDet.detPerson(path);
+        if (personList.size() > 0) {
+            Card card = new Card.Builder(MainActivity.this)
+                    .withProvider(BigImageCardProvider.class)
+                    .setDrawable(drawRect(path, personList, Color.BLUE))
+                    .setTitle("Person det")
+                    .endConfig()
+                    .build();
+            cardrets.add(card);
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
-        @Override
-        protected void onPostExecute(List<Card> rets) {
-            super.onPostExecute(rets);
-            if (mmDialog != null) {
-                mmDialog.dismiss();
-            }
-            for (Card each : rets) {
-                mListView.add(each);
-            }
+        List<VisionDetRet> faceList = peopleDet.detFace(path);
+        if (faceList.size() > 0) {
+            Card card = new Card.Builder(MainActivity.this)
+                    .withProvider(BigImageCardProvider.class)
+                    .setDrawable(drawRect(path, faceList, Color.GREEN))
+                    .setTitle("Face det")
+                    .endConfig()
+                    .build();
+            cardrets.add(card);
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        addCardListView(cardrets);
+        dismissDialog();
+    }
+
+    @UiThread
+    protected void addCardListView(List<Card> cardrets) {
+        for (Card each : cardrets) {
+            mListView.add(each);
+        }
+    }
+
+    @UiThread
+    protected void showDiaglog() {
+        mDialog = ProgressDialog.show(MainActivity.this, "Wait", "Person and face detection", true);
+    }
+
+    @UiThread
+    protected  void dismissDialog() {
+        if (mDialog != null) {
+            mDialog.dismiss();
         }
     }
 
     @DebugLog
-    private BitmapDrawable drawRect(String path, List<VisionDetRet> results, int color) {
+    protected BitmapDrawable drawRect(String path, List<VisionDetRet> results, int color) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
         Bitmap bm = BitmapFactory.decodeFile(path, options);
@@ -323,37 +338,8 @@ public class MainActivity extends AppCompatActivity {
         return new BitmapDrawable(getResources(), bm);
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        try {
-            // When an Image is picked
-            if (requestCode == RESULT_LOAD_IMG && resultCode == RESULT_OK && null != data) {
-                // Get the Image from data
-                Uri selectedImage = data.getData();
-                String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                // Get the cursor
-                Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-                cursor.moveToFirst();
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                mTestImgPath = cursor.getString(columnIndex);
-                cursor.close();
-                if (mTestImgPath != null) {
-                    DetTask task = new DetTask();
-                    task.execute(mTestImgPath);
-                    Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
-                }
-            } else if (requestCode == RESULT_EXTERNAL_STORAGE) {
-                demo();
-            } else {
-                Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
-        }
-    }
-
     @DebugLog
-    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+    protected Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bm, newWidth, newHeight, true);
         return resizedBitmap;
     }

@@ -30,7 +30,6 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 
 * Use command line to build (Optional)
 
-```sh
 On Windows platforms, type this command:
 
 `$ gradlew.bat assembleDebug`
@@ -40,7 +39,6 @@ On Mac OS and Linux platforms, type these commands:
 `$ chmod +x gradlew`
 
 `$ ./gradlew assembleDebug`
-```
 
 #### Update shared lib (Optional)
 You can build shared library from [dlib-android](https://github.com/tzutalin/dlib-android)

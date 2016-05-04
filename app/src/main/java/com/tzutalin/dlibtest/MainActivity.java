@@ -4,8 +4,11 @@
 
 package com.tzutalin.dlibtest;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,10 +19,13 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -43,7 +49,16 @@ import hugo.weaving.DebugLog;
 
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
+    private static final int RESULT_EXTERNAL_STORAGE = 2;
+
     private static final String TAG = "MainActivity";
+
+    // Storage Permissions
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
     // UI
     private MaterialListView mListView;
     private String mTestImgPath;
@@ -68,15 +83,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (mTestImgPath != null) {
-            DetTask task = new DetTask();
-            task.execute(mTestImgPath);
-        } else {
-            // Create intent to Open Image applications like Gallery, Google Photos
-            Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
-            Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
+        // Just use hugo to print log
+        isExternalStorageWritable();
+        isExternalStorageReadable();
+
+        // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
+        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+        if (currentapiVersion >= Build.VERSION_CODES.M && verifyStoragePermissions(this) ) {
+            verifyStoragePermissions(this);
         }
+
+        demo();
     }
 
     @Override
@@ -101,6 +118,66 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Checks if the app has permission to write to device storage
+     * If the app does not has permission then the user will be prompted to grant permissions
+     *
+     * @param activity
+     */
+    @DebugLog
+    private static boolean verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int write_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (write_permission != PackageManager.PERMISSION_GRANTED || read_persmission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    RESULT_EXTERNAL_STORAGE
+            );
+            return false;
+        } else {
+            return  true;
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    @DebugLog
+    private boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    @DebugLog
+    private boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    @DebugLog
+    private void demo() {
+        if (mTestImgPath != null) {
+            Log.d(TAG, "demo() launch a task to det");
+            DetTask task = new DetTask();
+            task.execute(mTestImgPath);
+        } else {
+            Log.d(TAG, "demo() mTestImgPath is null, go to gallery");
+            Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
+            // Create intent to Open Image applications like Gallery, Google Photos
+            Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+        }
+    }
 
     // ==========================================================
     // Tasks inner class
@@ -117,8 +194,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected List<Card> doInBackground(String... strings) {
             final String targetPath = Constants.getFaceShapeModelPath();
-            if (!new File(targetPath).exists())
+            if (!new File(targetPath).exists()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
+                    }
+                });
                 FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
+            }
 
             String path = strings[0];
             Log.d(TAG, "Image path: " + path);
@@ -258,6 +342,8 @@ public class MainActivity extends AppCompatActivity {
                     task.execute(mTestImgPath);
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
+            } else if (requestCode == RESULT_EXTERNAL_STORAGE) {
+                demo();
             } else {
                 Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();
             }

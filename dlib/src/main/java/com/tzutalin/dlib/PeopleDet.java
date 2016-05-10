@@ -88,6 +88,39 @@ public class PeopleDet {
         }
         return ret;
     }
+    //You can input Bitmap
+    //In java, change bitmap into int array.In jni, get jintArray and change into cv::Mat
+    //It is more flexible than input image path
+    //Author:zhao
+    //Mail:zhaotu2016@163.com
+    //Date:2016/5/10
+    public List<VisionDetRet> detBitmapFace(Bitmap mBitmap) {
+    	
+    	int w = mBitmap.getWidth();
+    	int h = mBitmap.getHeight();
+		int[] pix = new int[w * h];
+		mBitmap.getPixels(pix, 0, w, 0, 0, w, h);
+		
+        List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
+        String landmarkPath = "";
+        // If landmark exits , then use it
+        if (new File(Constants.getFaceShapeModelPath()).exists()) {
+            landmarkPath = Constants.getFaceShapeModelPath();
+        }
+       Log.d("main", "landmark file "+landmarkPath);
+        int size = jniBitmapFaceDect(pix, w,h,landmarkPath);
+        Log.d("main", "face size"+size);
+        for (int i = 0; i != size; i++) {
+           VisionDetRet det = new VisionDetRet();
+            int success = jniGetDLibHOGFaceRet(det, i);
+            if (success >= 0) {
+                ret.add(det);
+                Log.d("main", det.getLabel());
+            }
+        }
+        return ret;
+    }
+
 
     public void init() {
         jniInit();
@@ -114,5 +147,8 @@ public class PeopleDet {
     private native int jniDLibHOGFaceDetect(String path, String landmarkModelPath);
 
     private native int jniGetDLibHOGFaceRet(VisionDetRet det, int index);
+    
+    //Bitmap detection JNI
+    private native int jniBitmapFaceDect(int[] image,int w,int h,String landmarkModelPath);
 
 }

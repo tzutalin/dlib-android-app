@@ -453,7 +453,7 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-    private final TensorflowImageListener tfPreviewListener = new TensorflowImageListener();
+    private final OnGetImageListener tfPreviewListener = new OnGetImageListener();
 
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {

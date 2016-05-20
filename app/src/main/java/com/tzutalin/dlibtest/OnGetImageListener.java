@@ -31,16 +31,12 @@ import android.os.Trace;
 import junit.framework.Assert;
 
 /**
- * Class that takes in preview frames and converts the image to Bitmaps to process with Tensorflow.
+ * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
-public class TensorflowImageListener implements OnImageAvailableListener {
+public class OnGetImageListener implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
 
   private static final boolean SAVE_PREVIEW_BITMAP = false;
-
-  private static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
-  private static final String LABEL_FILE =
-      "file:///android_asset/imagenet_comp_graph_label_strings.txt";
 
   private static final int NUM_CLASSES = 1001;
   private static final int INPUT_SIZE = 224;
@@ -153,7 +149,7 @@ public class TensorflowImageListener implements OnImageAvailableListener {
     rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
     drawResizedBitmap(rgbFrameBitmap, croppedBitmap);
 
-    // For examining the actual TF input.
+    // TODO: Input image here.
 
     Trace.endSection();
   }

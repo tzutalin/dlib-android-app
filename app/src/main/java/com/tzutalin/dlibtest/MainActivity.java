@@ -18,21 +18,16 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.dexafree.materialList.card.Card;
@@ -73,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     protected MaterialListView mListView;
     @ViewById(R.id.fab)
     protected FloatingActionButton mFabActionBt;
+    @ViewById(R.id.fab_cam)
+    protected FloatingActionButton mFabCamActionBt;
     @ViewById(R.id.toolbar)
     protected Toolbar mToolbar;
 
@@ -91,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
         if (currentapiVersion >= Build.VERSION_CODES.M && verifyStoragePermissions(this)) {
             verifyStoragePermissions(this);
         }
-
-        demo();
     }
 
     @Click({R.id.fab})
@@ -100,6 +95,11 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+    }
+
+    @Click({R.id.fab_cam})
+    void launchCameraPreview() {
+        startActivity(new Intent(this, CameraActivity.class));
     }
 
     /**
@@ -149,12 +149,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @DebugLog
-    protected void demo() {
+    protected void demoStaticImage() {
         if (mTestImgPath != null) {
-            Log.d(TAG, "demo() launch a task to det");
+            Log.d(TAG, "demoStaticImage() launch a task to det");
             runDetectAsync(mTestImgPath);
         } else {
-            Log.d(TAG, "demo() mTestImgPath is null, go to gallery");
+            Log.d(TAG, "demoStaticImage() mTestImgPath is null, go to gallery");
             Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
             // Create intent to Open Image applications like Gallery, Google Photos
             Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
             } else if (requestCode == RESULT_EXTERNAL_STORAGE) {
-                demo();
+                demoStaticImage();
             } else {
                 Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();
             }
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @UiThread
-    protected  void dismissDialog() {
+    protected void dismissDialog() {
         if (mDialog != null) {
             mDialog.dismiss();
         }

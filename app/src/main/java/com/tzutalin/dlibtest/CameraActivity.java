@@ -15,9 +15,11 @@
  */
 
 package com.tzutalin.dlibtest;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
+
 /**
  * Created by darrenl on 2016/5/20.
  */

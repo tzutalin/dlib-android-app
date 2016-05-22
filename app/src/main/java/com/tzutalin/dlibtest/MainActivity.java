@@ -52,14 +52,15 @@ import hugo.weaving.DebugLog;
 @EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
-    private static final int RESULT_EXTERNAL_STORAGE = 2;
+    private static final int RESULT_PERMISSION_STORAGE = 2;
 
     private static final String TAG = "MainActivity";
 
     // Storage Permissions
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
     };
 
     protected String mTestImgPath;
@@ -85,8 +86,9 @@ public class MainActivity extends AppCompatActivity {
 
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-        if (currentapiVersion >= Build.VERSION_CODES.M && verifyStoragePermissions(this)) {
-            verifyStoragePermissions(this);
+
+        if (currentapiVersion >= Build.VERSION_CODES.M && verifyPermissions(this)) {
+            verifyPermissions(this);
         }
     }
 
@@ -103,23 +105,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Checks if the app has permission to write to device storage
+     * Checks if the app has permission to write to device storage or open camera
      * If the app does not has permission then the user will be prompted to grant permissions
      *
      * @param activity
      */
     @DebugLog
-    private static boolean verifyStoragePermissions(Activity activity) {
+    private static boolean verifyPermissions(Activity activity) {
         // Check if we have write permission
         int write_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int camera_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
 
-        if (write_permission != PackageManager.PERMISSION_GRANTED || read_persmission != PackageManager.PERMISSION_GRANTED) {
+        if (write_permission != PackageManager.PERMISSION_GRANTED ||
+                read_persmission != PackageManager.PERMISSION_GRANTED ||
+                camera_permission != PackageManager.PERMISSION_GRANTED) {
             // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,
-                    RESULT_EXTERNAL_STORAGE
+                    RESULT_PERMISSION_STORAGE
             );
             return false;
         } else {
@@ -180,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
                     runDetectAsync(mTestImgPath);
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
-            } else if (requestCode == RESULT_EXTERNAL_STORAGE) {
+            } else if (requestCode == RESULT_PERMISSION_STORAGE) {
                 demoStaticImage();
             } else {
                 Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();

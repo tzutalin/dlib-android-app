@@ -63,6 +63,8 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import hugo.weaving.DebugLog;
+
 public class CameraConnectionFragment extends Fragment {
 
     /**
@@ -243,6 +245,7 @@ public class CameraConnectionFragment extends Fragment {
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
     @SuppressLint("LongLogTag")
+    @DebugLog
     private static Size chooseOptimalSize(
             final Size[] choices, final int width, final int height, final Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the preview Surface
@@ -317,6 +320,7 @@ public class CameraConnectionFragment extends Fragment {
      * @param width  The width of available size for camera preview
      * @param height The height of available size for camera preview
      */
+    @DebugLog
     @SuppressLint("LongLogTag")
     private void setUpCameraOutputs(final int width, final int height) {
         final Activity activity = getActivity();
@@ -375,6 +379,7 @@ public class CameraConnectionFragment extends Fragment {
      * Opens the camera specified by {@link CameraConnectionFragment#cameraId}.
      */
     @SuppressLint("LongLogTag")
+    @DebugLog
     private void openCamera(final int width, final int height) {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
@@ -385,9 +390,10 @@ public class CameraConnectionFragment extends Fragment {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
             if (ActivityCompat.checkSelfPermission(this.getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                return;
+                Log.w(TAG, "checkSelfPermission CAMERA");
             }
             manager.openCamera(cameraId, stateCallback, backgroundHandler);
+            Log.d(TAG, "open Camera");
         } catch (final CameraAccessException e) {
             Log.e(TAG, "Exception!", e);
         } catch (final InterruptedException e) {
@@ -398,6 +404,7 @@ public class CameraConnectionFragment extends Fragment {
     /**
      * Closes the current {@link CameraDevice}.
      */
+    @DebugLog
     private void closeCamera() {
         try {
             cameraOpenCloseLock.acquire();
@@ -423,6 +430,7 @@ public class CameraConnectionFragment extends Fragment {
     /**
      * Starts a background thread and its {@link Handler}.
      */
+    @DebugLog
     private void startBackgroundThread() {
         backgroundThread = new HandlerThread("ImageListener");
         backgroundThread.start();
@@ -437,6 +445,7 @@ public class CameraConnectionFragment extends Fragment {
      * Stops the background thread and its {@link Handler}.
      */
     @SuppressLint("LongLogTag")
+    @DebugLog
     private void stopBackgroundThread() {
         backgroundThread.quitSafely();
         inferenceThread.quitSafely();
@@ -453,7 +462,7 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-    private final OnGetImageListener tfPreviewListener = new OnGetImageListener();
+    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
 
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {
@@ -474,6 +483,7 @@ public class CameraConnectionFragment extends Fragment {
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
     @SuppressLint("LongLogTag")
+    @DebugLog
     private void createCameraPreviewSession() {
         try {
             final SurfaceTexture texture = textureView.getSurfaceTexture();
@@ -496,7 +506,7 @@ public class CameraConnectionFragment extends Fragment {
                     ImageReader.newInstance(
                             previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
 
-            previewReader.setOnImageAvailableListener(tfPreviewListener, backgroundHandler);
+            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, backgroundHandler);
             previewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
@@ -542,7 +552,7 @@ public class CameraConnectionFragment extends Fragment {
         }
 
         Log.i(TAG, "Getting assets.");
-        tfPreviewListener.initialize(getActivity().getAssets(), scoreView, inferenceHandler);
+        mOnGetPreviewListener.initialize(getActivity().getAssets(), scoreView, inferenceHandler);
     }
 
     /**
@@ -553,6 +563,7 @@ public class CameraConnectionFragment extends Fragment {
      * @param viewWidth  The width of `mTextureView`
      * @param viewHeight The height of `mTextureView`
      */
+    @DebugLog
     private void configureTransform(final int viewWidth, final int viewHeight) {
         final Activity activity = getActivity();
         if (null == textureView || null == previewSize || null == activity) {

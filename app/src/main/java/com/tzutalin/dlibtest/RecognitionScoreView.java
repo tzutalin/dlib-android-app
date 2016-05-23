@@ -19,7 +19,9 @@ package com.tzutalin.dlibtest;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -28,43 +30,68 @@ import com.tzutalin.dlib.VisionDetRet;
 import java.util.List;
 
 public class RecognitionScoreView extends View {
-  private static final float TEXT_SIZE_DIP = 24;
-  private List<VisionDetRet> results;
-  private final float textSizePx;
-  private final Paint fgPaint;
-  private final Paint bgPaint;
+    private static final float TEXT_SIZE_DIP = 24;
+    private static final String TAG = "RecognitionScoreView";
+    private List<VisionDetRet> results;
+    private final float textSizePx;
+    private final Paint fgPaint;
+    private final Paint bgPaint;
 
-  public RecognitionScoreView(final Context context, final AttributeSet set) {
-    super(context, set);
+    public RecognitionScoreView(final Context context, final AttributeSet set) {
+        super(context, set);
 
-    textSizePx =
-        TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
-    fgPaint = new Paint();
-    fgPaint.setTextSize(textSizePx);
+        textSizePx =
+                TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
+        fgPaint = new Paint();
+        fgPaint.setTextSize(textSizePx);
 
-    bgPaint = new Paint();
-    bgPaint.setColor(0xcc4285f4);
-  }
-
-  public void setResults(final List<VisionDetRet> results) {
-    this.results = results;
-    postInvalidate();
-  }
-
-  @Override
-  public void onDraw(final Canvas canvas) {
-    final int x = 10;
-    int y = (int) (fgPaint.getTextSize() * 1.5f);
-
-    canvas.drawPaint(bgPaint);
-
-    if (results != null) {
-      for (final VisionDetRet ret : results) {
-        // TODO
-        /*canvas.drawText(recog.getTitle() + ": " + recog.getConfidence(), x, y, fgPaint);
-        y += fgPaint.getTextSize() * 1.5f;*/
-      }
+        bgPaint = new Paint();
+        bgPaint.setColor(0xcc4285f4);
     }
-  }
+
+    public void setResults(final List<VisionDetRet> results) {
+        this.results = results;
+        postInvalidate();
+    }
+
+    @Override
+    public void onDraw(final Canvas canvas) {
+        final int x = 10;
+        int y = (int) (fgPaint.getTextSize() * 1.5f);
+
+        canvas.drawPaint(bgPaint);
+
+        if (results != null) {
+            for (final VisionDetRet ret : results) {
+                // TODO
+                /*canvas.drawText(recog.getTitle() + ": " + recog.getConfidence(), x, y, fgPaint);
+                y += fgPaint.getTextSize() * 1.5f;*/
+
+                float resizeRatio = 1.0f;
+                Rect bounds = new Rect();
+                bounds.left = (int) (ret.getLeft() * resizeRatio);
+                bounds.top = (int) (ret.getTop() * resizeRatio);
+                bounds.right = (int) (ret.getRight() * resizeRatio);
+                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+
+                canvas.drawRect(bounds, bgPaint);
+
+                String label = ret.getLabel();
+                // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
+                Log.d(TAG, "drawRect: label->" + label);
+                if (label.startsWith("face_landmarks ")) {
+                    String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
+                    for (String landmarkStr : landmarkStrs) {
+                        String[] xyStrs = landmarkStr.split(",");
+                        int pointX = Integer.parseInt(xyStrs[0]);
+                        int pointY = Integer.parseInt(xyStrs[1]);
+                        pointX = (int) (pointX * resizeRatio);
+                        pointY = (int) (pointY * resizeRatio);
+                        canvas.drawCircle(pointX, pointY, 2, bgPaint);
+                    }
+                }
+            }
+        }
+    }
 }

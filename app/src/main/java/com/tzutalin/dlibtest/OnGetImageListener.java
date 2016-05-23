@@ -27,130 +27,155 @@ import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.os.Trace;
+import android.util.Log;
+
+import com.tzutalin.dlib.PeopleDet;
+import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
+
+import java.util.List;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
 public class OnGetImageListener implements OnImageAvailableListener {
-  private static final Logger LOGGER = new Logger();
+    private static final Logger LOGGER = new Logger();
 
-  private static final boolean SAVE_PREVIEW_BITMAP = false;
+    private static final boolean SAVE_PREVIEW_BITMAP = false;
 
-  private static final int NUM_CLASSES = 1001;
-  private static final int INPUT_SIZE = 224;
-  private static final int IMAGE_MEAN = 117;
+    private static final int NUM_CLASSES = 1001;
+    private static final int INPUT_SIZE = 224;
+    private static final int IMAGE_MEAN = 117;
+    private static final String TAG = "OnGetImageListener";
 
-  // TODO(andrewharp): Get orientation programatically.
-  private final int screenRotation = 90;
+    // TODO(andrewharp): Get orientation programatically.
+    private final int screenRotation = 90;
 
 
-  private int previewWidth = 0;
-  private int previewHeight = 0;
-  private byte[][] yuvBytes;
-  private int[] rgbBytes = null;
-  private Bitmap rgbFrameBitmap = null;
-  private Bitmap croppedBitmap = null;
-  
-  private boolean computing = false;
-  private Handler handler;
-  
-  private RecognitionScoreView scoreView;
+    private int previewWidth = 0;
+    private int previewHeight = 0;
+    private byte[][] yuvBytes;
+    private int[] rgbBytes = null;
+    private Bitmap rgbFrameBitmap = null;
+    private Bitmap croppedBitmap = null;
 
-  public void initialize(
-      final AssetManager assetManager,
-      final RecognitionScoreView scoreView,
-      final Handler handler) {
-    this.scoreView = scoreView;
-    this.handler = handler;
-  }
+    private boolean computing = false;
+    private Handler handler;
 
-  private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
-    Assert.assertEquals(dst.getWidth(), dst.getHeight());
-    final float minDim = Math.min(src.getWidth(), src.getHeight());
+    private PeopleDet mPeopleDet;
+    private RecognitionScoreView scoreView;
 
-    final Matrix matrix = new Matrix();
-
-    // We only want the center square out of the original rectangle.
-    final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);
-    final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);
-    matrix.preTranslate(translateX, translateY);
-
-    final float scaleFactor = dst.getHeight() / minDim;
-    matrix.postScale(scaleFactor, scaleFactor);
-
-    // Rotate around the center if necessary.
-    if (screenRotation != 0) {
-      matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f);
-      matrix.postRotate(screenRotation);
-      matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f);
+    public void initialize(
+            final AssetManager assetManager,
+            final RecognitionScoreView scoreView,
+            final Handler handler) {
+        this.scoreView = scoreView;
+        this.handler = handler;
+        mPeopleDet = new PeopleDet();
     }
 
-    final Canvas canvas = new Canvas(dst);
-    canvas.drawBitmap(src, matrix, null);
-  }
+    private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
+        Assert.assertEquals(dst.getWidth(), dst.getHeight());
+        final float minDim = Math.min(src.getWidth(), src.getHeight());
 
-  @Override
-  public void onImageAvailable(final ImageReader reader) {
-    Image image = null;
-    try {
-      image = reader.acquireLatestImage();
+        final Matrix matrix = new Matrix();
 
-      if (image == null) {
-        return;
-      }
-      
-      // No mutex needed as this method is not reentrant.
-      if (computing) {
-        image.close();
-        return;
-      }
-      computing = true;
+        // We only want the center square out of the original rectangle.
+        final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);
+        final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);
+        matrix.preTranslate(translateX, translateY);
 
-      Trace.beginSection("imageAvailable");
+        final float scaleFactor = dst.getHeight() / minDim;
+        matrix.postScale(scaleFactor, scaleFactor);
 
-      final Plane[] planes = image.getPlanes();
-
-      // Initialize the storage bitmaps once when the resolution is known.
-      if (previewWidth != image.getWidth() || previewHeight != image.getHeight()) {
-        previewWidth = image.getWidth();
-        previewHeight = image.getHeight();
-
-        LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
-        rgbBytes = new int[previewWidth * previewHeight];
-        rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-        croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
-
-        yuvBytes = new byte[planes.length][];
-        for (int i = 0; i < planes.length; ++i) {
-          yuvBytes[i] = new byte[planes[i].getBuffer().capacity()];
+        // Rotate around the center if necessary.
+        if (screenRotation != 0) {
+            matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f);
+            matrix.postRotate(screenRotation);
+            matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f);
         }
-      }
 
-      for (int i = 0; i < planes.length; ++i) {
-        planes[i].getBuffer().get(yuvBytes[i]);
-      }
-
-      final int yRowStride = planes[0].getRowStride();
-      final int uvRowStride = planes[1].getRowStride();
-      final int uvPixelStride = planes[1].getPixelStride();
-
-      image.close();
-    } catch (final Exception e) {
-      if (image != null) {
-        image.close();
-      }
-      LOGGER.e(e, "Exception!");
-      Trace.endSection();
-      return;
+        final Canvas canvas = new Canvas(dst);
+        canvas.drawBitmap(src, matrix, null);
     }
 
-    rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-    drawResizedBitmap(rgbFrameBitmap, croppedBitmap);
+    @Override
+    public void onImageAvailable(final ImageReader reader) {
+        Image image = null;
+        try {
+            image = reader.acquireLatestImage();
 
-    // TODO: Input image here.
+            if (image == null) {
+                return;
+            }
 
-    Trace.endSection();
-  }
+            // No mutex needed as this method is not reentrant.
+            if (computing) {
+                image.close();
+                return;
+            }
+            computing = true;
+
+            Trace.beginSection("imageAvailable");
+
+            final Plane[] planes = image.getPlanes();
+
+            // Initialize the storage bitmaps once when the resolution is known.
+            if (previewWidth != image.getWidth() || previewHeight != image.getHeight()) {
+                previewWidth = image.getWidth();
+                previewHeight = image.getHeight();
+
+                LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
+                rgbBytes = new int[previewWidth * previewHeight];
+                rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
+                croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+
+                yuvBytes = new byte[planes.length][];
+                for (int i = 0; i < planes.length; ++i) {
+                    yuvBytes[i] = new byte[planes[i].getBuffer().capacity()];
+                }
+            }
+
+            for (int i = 0; i < planes.length; ++i) {
+                planes[i].getBuffer().get(yuvBytes[i]);
+            }
+
+            final int yRowStride = planes[0].getRowStride();
+            final int uvRowStride = planes[1].getRowStride();
+            final int uvPixelStride = planes[1].getPixelStride();
+
+            image.close();
+        } catch (final Exception e) {
+            if (image != null) {
+                image.close();
+            }
+            LOGGER.e(e, "Exception!");
+            Trace.endSection();
+            return;
+        }
+
+        rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
+        drawResizedBitmap(rgbFrameBitmap, croppedBitmap);
+
+        if (SAVE_PREVIEW_BITMAP) {
+            ImageUtils.saveBitmap(croppedBitmap);
+        }
+
+        handler.post(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        List<VisionDetRet> results = mPeopleDet.detBitmapFace(croppedBitmap);
+                        Log.d(TAG, String.format("%d results", results.size()));
+                        for (final VisionDetRet result : results) {
+                            Log.d(TAG, " result " + result);
+                        }
+                        scoreView.setResults(results);
+                        computing = false;
+                    }
+                });
+
+        Trace.endSection();
+    }
 }

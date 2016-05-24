@@ -18,6 +18,7 @@ package com.tzutalin.dlibtest;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -36,6 +37,7 @@ public class RecognitionScoreView extends View {
     private final float textSizePx;
     private final Paint fgPaint;
     private final Paint bgPaint;
+    private final Paint landmarkPaint;
 
     public RecognitionScoreView(final Context context, final AttributeSet set) {
         super(context, set);
@@ -48,6 +50,11 @@ public class RecognitionScoreView extends View {
 
         bgPaint = new Paint();
         bgPaint.setColor(0xcc4285f4);
+
+        landmarkPaint = new Paint();
+        landmarkPaint.setColor(Color.GREEN);
+        landmarkPaint.setStrokeWidth(2);
+        landmarkPaint.setStyle(Paint.Style.STROKE);
     }
 
     public void setResults(final List<VisionDetRet> results) {
@@ -75,11 +82,11 @@ public class RecognitionScoreView extends View {
                 bounds.right = (int) (ret.getRight() * resizeRatio);
                 bounds.bottom = (int) (ret.getBottom() * resizeRatio);
 
-                canvas.drawRect(bounds, bgPaint);
+                canvas.drawRect(bounds, landmarkPaint);
 
                 String label = ret.getLabel();
+                Log.d(TAG, "draw label: " + label);
                 // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
-                Log.d(TAG, "drawRect: label->" + label);
                 if (label.startsWith("face_landmarks ")) {
                     String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
                     for (String landmarkStr : landmarkStrs) {
@@ -88,7 +95,9 @@ public class RecognitionScoreView extends View {
                         int pointY = Integer.parseInt(xyStrs[1]);
                         pointX = (int) (pointX * resizeRatio);
                         pointY = (int) (pointY * resizeRatio);
-                        canvas.drawCircle(pointX, pointY, 2, bgPaint);
+
+                        Log.d(TAG, String.format("draw (%d, %d)", pointX, pointY));
+                        canvas.drawCircle(pointX, pointY, 2, landmarkPaint);
                     }
                 }
             }

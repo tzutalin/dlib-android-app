@@ -75,6 +75,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mPeopleDet = new PeopleDet();
     }
 
+    public void deInitialize() {
+        synchronized (OnGetImageListener.this) {
+            if (mPeopleDet != null) {
+                mPeopleDet.deInit();
+            }
+        }
+    }
+
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
         Assert.assertEquals(dst.getWidth(), dst.getHeight());
         final float minDim = Math.min(src.getWidth(), src.getHeight());
@@ -144,6 +152,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final int yRowStride = planes[0].getRowStride();
             final int uvRowStride = planes[1].getRowStride();
             final int uvPixelStride = planes[1].getPixelStride();
+            ImageUtils.convertYUV420ToARGB8888(
+                    yuvBytes[0],
+                    yuvBytes[1],
+                    yuvBytes[2],
+                    rgbBytes,
+                    previewWidth,
+                    previewHeight,
+                    yRowStride,
+                    uvRowStride,
+                    uvPixelStride,
+                    false);
 
             image.close();
         } catch (final Exception e) {
@@ -166,12 +185,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 new Runnable() {
                     @Override
                     public void run() {
-                        List<VisionDetRet> results = mPeopleDet.detBitmapFace(croppedBitmap);
-                        Log.d(TAG, String.format("%d results", results.size()));
-                        for (final VisionDetRet result : results) {
-                            Log.d(TAG, " result " + result);
+                        synchronized (OnGetImageListener.this) {
+                            List<VisionDetRet> results = mPeopleDet.detBitmapFace(croppedBitmap);
+                            Log.d(TAG, String.format("%d results", results.size()));
+                            scoreView.setResults(results);
                         }
-                        scoreView.setResults(results);
                         computing = false;
                     }
                 });

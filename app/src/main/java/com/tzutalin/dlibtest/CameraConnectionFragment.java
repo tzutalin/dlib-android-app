@@ -161,6 +161,10 @@ public class CameraConnectionFragment extends Fragment {
                     cameraOpenCloseLock.release();
                     cd.close();
                     cameraDevice = null;
+
+                    if (mOnGetPreviewListener != null) {
+                        mOnGetPreviewListener.deInitialize();
+                    }
                 }
 
                 @Override
@@ -171,6 +175,10 @@ public class CameraConnectionFragment extends Fragment {
                     final Activity activity = getActivity();
                     if (null != activity) {
                         activity.finish();
+                    }
+
+                    if (mOnGetPreviewListener != null) {
+                        mOnGetPreviewListener.deInitialize();
                     }
                 }
             };
@@ -419,6 +427,9 @@ public class CameraConnectionFragment extends Fragment {
             if (null != previewReader) {
                 previewReader.close();
                 previewReader = null;
+            }
+            if (null != mOnGetPreviewListener) {
+                mOnGetPreviewListener.deInitialize();
             }
         } catch (final InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);

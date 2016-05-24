@@ -17,13 +17,15 @@
 package com.tzutalin.dlib;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
-import android.graphics.Bitmap;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,12 +37,13 @@ import hugo.weaving.DebugLog;
 public class PeopleDet {
     private static final String TAG = "PeopleDet";
     protected static boolean sInitialized = false;
+
     static {
         try {
             System.loadLibrary("people_det");
             jniNativeClassInit();
             sInitialized = true;
-            android.util.Log.d("PeopleDet", "jniNativeClassInit success");
+            Log.d(TAG, "jniNativeClassInit success");
         } catch (UnsatisfiedLinkError e) {
             android.util.Log.d("PeopleDet", "library not found!");
         }
@@ -81,7 +84,7 @@ public class PeopleDet {
 
         int size = jniDLibHOGFaceDetect(path, landmarkPath);
         for (int i = 0; i != size; i++) {
-           VisionDetRet det = new VisionDetRet();
+            VisionDetRet det = new VisionDetRet();
             int success = jniGetDLibHOGFaceRet(det, i);
             if (success >= 0) {
                 ret.add(det);
@@ -89,34 +92,29 @@ public class PeopleDet {
         }
         return ret;
     }
-    //You can input Bitmap
-    //In java, change bitmap into int array.In jni, get jintArray and change into cv::Mat
-    //It is more flexible than input image path
+
     //Author:zhao
     //Mail:zhaotu2016@163.com
     //Date:2016/5/10
-    public List<VisionDetRet> detBitmapFace(Bitmap mBitmap) {
-    	
-    	int w = mBitmap.getWidth();
-    	int h = mBitmap.getHeight();
-		int[] pix = new int[w * h];
-		mBitmap.getPixels(pix, 0, w, 0, 0, w, h);
-		
+    /**
+     * Input is bitmap
+     * @param bitmap
+     * @return The list of VisionDetRets
+     */
+    @NonNull
+    public List<VisionDetRet> detBitmapFace(@NonNull Bitmap bitmap) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
         String landmarkPath = "";
-        // If landmark exits , then use it
         if (new File(Constants.getFaceShapeModelPath()).exists()) {
             landmarkPath = Constants.getFaceShapeModelPath();
         }
-       Log.d("main", "landmark file "+landmarkPath);
-        int size = jniBitmapFaceDect(pix, w,h,landmarkPath);
-        Log.d("main", "face size"+size);
+        Log.d(TAG, "landmark file " + landmarkPath);
+        int size = jniBitmapFaceDect(bitmap, landmarkPath);
         for (int i = 0; i != size; i++) {
-           VisionDetRet det = new VisionDetRet();
+            VisionDetRet det = new VisionDetRet();
             int success = jniGetDLibHOGFaceRet(det, i);
             if (success >= 0) {
                 ret.add(det);
-                Log.d("main", det.getLabel());
             }
         }
         return ret;
@@ -148,8 +146,8 @@ public class PeopleDet {
     private native int jniDLibHOGFaceDetect(String path, String landmarkModelPath);
 
     private native int jniGetDLibHOGFaceRet(VisionDetRet det, int index);
-    
+
     //Bitmap detection JNI
-    private native int jniBitmapFaceDect(int[] image,int w,int h,String landmarkModelPath);
+    private native int jniBitmapFaceDect(Bitmap bitmap, String landmarkModelPath);
 
 }

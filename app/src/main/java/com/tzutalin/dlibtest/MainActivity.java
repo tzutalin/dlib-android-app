@@ -52,15 +52,16 @@ import hugo.weaving.DebugLog;
 @EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
-    private static final int RESULT_PERMISSION_STORAGE = 2;
+    private static final int RESULT_PERMISSION = 2;
 
     private static final String TAG = "MainActivity";
 
     // Storage Permissions
-    private static String[] PERMISSIONS_STORAGE = {
+    private static String[] PERMISSIONS_REQ = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
+            Manifest.permission.CAMERA,
+            Manifest.permission.SYSTEM_ALERT_WINDOW
     };
 
     protected String mTestImgPath;
@@ -116,15 +117,17 @@ public class MainActivity extends AppCompatActivity {
         int write_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int camera_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
+        int window_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.SYSTEM_ALERT_WINDOW);
 
         if (write_permission != PackageManager.PERMISSION_GRANTED ||
                 read_persmission != PackageManager.PERMISSION_GRANTED ||
-                camera_permission != PackageManager.PERMISSION_GRANTED) {
+                camera_permission != PackageManager.PERMISSION_GRANTED ||
+                window_permission != PackageManager.PERMISSION_GRANTED) {
             // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
-                    PERMISSIONS_STORAGE,
-                    RESULT_PERMISSION_STORAGE
+                    PERMISSIONS_REQ,
+                    RESULT_PERMISSION
             );
             return false;
         } else {
@@ -185,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                     runDetectAsync(mTestImgPath);
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
-            } else if (requestCode == RESULT_PERMISSION_STORAGE) {
+            } else if (requestCode == RESULT_PERMISSION) {
                 demoStaticImage();
             } else {
                 Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();

@@ -16,11 +16,17 @@
 
 package com.tzutalin.dlibtest;
 
+import android.content.Context;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -28,6 +34,8 @@ import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -42,16 +50,14 @@ import java.util.List;
 public class OnGetImageListener implements OnImageAvailableListener {
     private static final Logger LOGGER = new Logger();
 
-    private static final boolean SAVE_PREVIEW_BITMAP = false;
+    private static final boolean SAVE_PREVIEW_BITMAP = true;
 
     private static final int NUM_CLASSES = 1001;
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final String TAG = "OnGetImageListener";
 
-    // TODO(andrewharp): Get orientation programatically.
-    private final int screenRotation = 90;
-
+    private int mScreenRotation = 90;
 
     private int previewWidth = 0;
     private int previewHeight = 0;
@@ -63,16 +69,29 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private boolean computing = false;
     private Handler handler;
 
+    private Context mContext;
     private PeopleDet mPeopleDet;
-    private RecognitionScoreView scoreView;
+    private RecognitionScoreView mScoreview;
+
+    private FloatingCameraWindow mWindow;
+
+    private Paint mFaceLandmardkPaint;
 
     public void initialize(
+            final Context context,
             final AssetManager assetManager,
             final RecognitionScoreView scoreView,
             final Handler handler) {
-        this.scoreView = scoreView;
+        this.mContext = context;
+        this.mScoreview = scoreView;
         this.handler = handler;
         mPeopleDet = new PeopleDet();
+        mWindow = new FloatingCameraWindow(mContext);
+
+        mFaceLandmardkPaint = new Paint();
+        mFaceLandmardkPaint.setColor(Color.GREEN);
+        mFaceLandmardkPaint.setStrokeWidth(2);
+        mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
     }
 
     public void deInitialize() {
@@ -80,10 +99,30 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (mPeopleDet != null) {
                 mPeopleDet.deInit();
             }
+
+            if (mWindow != null) {
+                mWindow.release();
+            }
         }
     }
 
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
+
+        Display getOrient = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int orientation = Configuration.ORIENTATION_UNDEFINED;
+        Point point = new Point();
+        getOrient.getSize(point);
+        int screen_width = point.x;
+        int screen_height = point.y;
+        Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
+        if (screen_width < screen_height) {
+            orientation = Configuration.ORIENTATION_PORTRAIT;
+            mScreenRotation = 90;
+        } else {
+            orientation = Configuration.ORIENTATION_LANDSCAPE;
+            mScreenRotation = 0;
+        }
+
         Assert.assertEquals(dst.getWidth(), dst.getHeight());
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
@@ -98,9 +137,9 @@ public class OnGetImageListener implements OnImageAvailableListener {
         matrix.postScale(scaleFactor, scaleFactor);
 
         // Rotate around the center if necessary.
-        if (screenRotation != 0) {
+        if (mScreenRotation != 0) {
             matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f);
-            matrix.postRotate(screenRotation);
+            matrix.postRotate(mScreenRotation);
             matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f);
         }
 
@@ -185,11 +224,45 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 new Runnable() {
                     @Override
                     public void run() {
+                        List<VisionDetRet> results;
                         synchronized (OnGetImageListener.this) {
-                            List<VisionDetRet> results = mPeopleDet.detBitmapFace(croppedBitmap);
+                            results = mPeopleDet.detBitmapFace(croppedBitmap);
                             Log.d(TAG, String.format("%d results", results.size()));
-                            scoreView.setResults(results);
+                            mScoreview.setResults(results);
                         }
+
+                        // Draw on bitmap
+                        if (results != null) {
+                            for (final VisionDetRet ret : results) {
+                                float resizeRatio = 1.0f;
+                                Rect bounds = new Rect();
+                                bounds.left = (int) (ret.getLeft() * resizeRatio);
+                                bounds.top = (int) (ret.getTop() * resizeRatio);
+                                bounds.right = (int) (ret.getRight() * resizeRatio);
+                                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+                                Canvas canvas = new Canvas(croppedBitmap);
+                                canvas.drawRect(bounds, mFaceLandmardkPaint);
+
+                                String label = ret.getLabel();
+                                Log.d(TAG, "draw label: " + label);
+                                // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
+                                if (label.startsWith("face_landmarks ")) {
+                                    String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
+                                    for (String landmarkStr : landmarkStrs) {
+                                        String[] xyStrs = landmarkStr.split(",");
+                                        int pointX = Integer.parseInt(xyStrs[0]);
+                                        int pointY = Integer.parseInt(xyStrs[1]);
+                                        pointX = (int) (pointX * resizeRatio);
+                                        pointY = (int) (pointY * resizeRatio);
+
+                                        Log.d(TAG, String.format("draw (%d, %d)", pointX, pointY));
+                                        canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                                    }
+                                }
+                            }
+                        }
+
+                        mWindow.setRGBBitmap(croppedBitmap);
                         computing = false;
                     }
                 });

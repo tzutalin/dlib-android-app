@@ -3,9 +3,10 @@
           package="com.tzutalin.dlibtest">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <!-- CAMERA -->
     <uses-permission android:name="android.permission.CAMERA"/>
-
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.autofocus"/>
 
@@ -31,8 +32,7 @@
         <activity
             android:name=".CameraActivity"
             android:configChanges="orientation|screenSize"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait">
+            android:label="@string/app_name">
         </activity>
     </application>
 

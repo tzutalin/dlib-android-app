@@ -24,8 +24,8 @@ import android.view.TextureView;
  * A {@link TextureView} that can be adjusted to a specified aspect ratio.
  */
 public class AutoFitTextureView extends TextureView {
-  private int ratioWidth = 0;
-  private int ratioHeight = 0;
+  private int mRatioWidth = 0;
+  private int mRatioHeight = 0;
 
   public AutoFitTextureView(final Context context) {
     this(context, null);
@@ -51,8 +51,8 @@ public class AutoFitTextureView extends TextureView {
     if (width < 0 || height < 0) {
       throw new IllegalArgumentException("Size cannot be negative.");
     }
-    ratioWidth = width;
-    ratioHeight = height;
+    mRatioWidth = width;
+    mRatioHeight = height;
     requestLayout();
   }
 
@@ -61,13 +61,13 @@ public class AutoFitTextureView extends TextureView {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     final int width = MeasureSpec.getSize(widthMeasureSpec);
     final int height = MeasureSpec.getSize(heightMeasureSpec);
-    if (0 == ratioWidth || 0 == ratioHeight) {
+    if (0 == mRatioWidth || 0 == mRatioHeight) {
       setMeasuredDimension(width, height);
     } else {
-      if (width < height * ratioWidth / ratioHeight) {
-        setMeasuredDimension(width, width * ratioHeight / ratioWidth);
+      if (width < height * mRatioWidth / mRatioHeight) {
+        setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
       } else {
-        setMeasuredDimension(height * ratioWidth / ratioHeight, height);
+        setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
       }
     }
   }

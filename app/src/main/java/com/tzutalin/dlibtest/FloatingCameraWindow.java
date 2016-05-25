@@ -73,9 +73,9 @@ public class FloatingCameraWindow {
             mScreenMaxWidth = display.getWidth();
             mScreenMaxHeight = display.getHeight();
         }
-
-        mWindowWidth = mScreenMaxWidth / 4;
-        mWindowHeight = mScreenMaxHeight / 4;
+        // Default window size
+        mWindowWidth = mScreenMaxWidth / 2;
+        mWindowHeight = mScreenMaxHeight / 2;
 
         mWindowWidth = mWindowWidth > 0 && mWindowWidth < mScreenMaxWidth ? mWindowWidth : mScreenMaxWidth;
         mWindowHeight = mWindowHeight > 0 && mWindowHeight < mScreenMaxHeight ? mWindowHeight : mScreenMaxHeight;

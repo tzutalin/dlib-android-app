@@ -37,11 +37,13 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -50,7 +52,7 @@ import java.util.List;
 public class OnGetImageListener implements OnImageAvailableListener {
     private static final Logger LOGGER = new Logger();
 
-    private static final boolean SAVE_PREVIEW_BITMAP = true;
+    private static final boolean SAVE_PREVIEW_BITMAP = false;
 
     private static final int NUM_CLASSES = 1001;
     private static final int INPUT_SIZE = 224;
@@ -59,32 +61,30 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private int mScreenRotation = 90;
 
-    private int previewWidth = 0;
-    private int previewHeight = 0;
-    private byte[][] yuvBytes;
-    private int[] rgbBytes = null;
-    private Bitmap rgbFrameBitmap = null;
-    private Bitmap croppedBitmap = null;
+    private int mPreviewWdith = 0;
+    private int mPreviewHeight = 0;
+    private byte[][] mYUVBytes;
+    private int[] mRGBBytes = null;
+    private Bitmap mRGBframeBitmap = null;
+    private Bitmap mCroppedBitmap = null;
 
-    private boolean computing = false;
-    private Handler handler;
+    private boolean mIsComputing = false;
+    private Handler mInferenceHandler;
 
     private Context mContext;
     private PeopleDet mPeopleDet;
-    private RecognitionScoreView mScoreview;
-
+    private TrasparentTitleView mTransparentTitleView;
     private FloatingCameraWindow mWindow;
-
     private Paint mFaceLandmardkPaint;
 
     public void initialize(
             final Context context,
             final AssetManager assetManager,
-            final RecognitionScoreView scoreView,
+            final TrasparentTitleView scoreView,
             final Handler handler) {
         this.mContext = context;
-        this.mScoreview = scoreView;
-        this.handler = handler;
+        this.mTransparentTitleView = scoreView;
+        this.mInferenceHandler = handler;
         mPeopleDet = new PeopleDet();
         mWindow = new FloatingCameraWindow(mContext);
 
@@ -158,46 +158,46 @@ public class OnGetImageListener implements OnImageAvailableListener {
             }
 
             // No mutex needed as this method is not reentrant.
-            if (computing) {
+            if (mIsComputing) {
                 image.close();
                 return;
             }
-            computing = true;
+            mIsComputing = true;
 
             Trace.beginSection("imageAvailable");
 
             final Plane[] planes = image.getPlanes();
 
             // Initialize the storage bitmaps once when the resolution is known.
-            if (previewWidth != image.getWidth() || previewHeight != image.getHeight()) {
-                previewWidth = image.getWidth();
-                previewHeight = image.getHeight();
+            if (mPreviewWdith != image.getWidth() || mPreviewHeight != image.getHeight()) {
+                mPreviewWdith = image.getWidth();
+                mPreviewHeight = image.getHeight();
 
-                LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
-                rgbBytes = new int[previewWidth * previewHeight];
-                rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-                croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+                LOGGER.i("Initializing at size %dx%d", mPreviewWdith, mPreviewHeight);
+                mRGBBytes = new int[mPreviewWdith * mPreviewHeight];
+                mRGBframeBitmap = Bitmap.createBitmap(mPreviewWdith, mPreviewHeight, Config.ARGB_8888);
+                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
 
-                yuvBytes = new byte[planes.length][];
+                mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
-                    yuvBytes[i] = new byte[planes[i].getBuffer().capacity()];
+                    mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
                 }
             }
 
             for (int i = 0; i < planes.length; ++i) {
-                planes[i].getBuffer().get(yuvBytes[i]);
+                planes[i].getBuffer().get(mYUVBytes[i]);
             }
 
             final int yRowStride = planes[0].getRowStride();
             final int uvRowStride = planes[1].getRowStride();
             final int uvPixelStride = planes[1].getPixelStride();
             ImageUtils.convertYUV420ToARGB8888(
-                    yuvBytes[0],
-                    yuvBytes[1],
-                    yuvBytes[2],
-                    rgbBytes,
-                    previewWidth,
-                    previewHeight,
+                    mYUVBytes[0],
+                    mYUVBytes[1],
+                    mYUVBytes[2],
+                    mRGBBytes,
+                    mPreviewWdith,
+                    mPreviewHeight,
                     yRowStride,
                     uvRowStride,
                     uvPixelStride,
@@ -213,24 +213,30 @@ public class OnGetImageListener implements OnImageAvailableListener {
             return;
         }
 
-        rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-        drawResizedBitmap(rgbFrameBitmap, croppedBitmap);
+        mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
+        drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
 
         if (SAVE_PREVIEW_BITMAP) {
-            ImageUtils.saveBitmap(croppedBitmap);
+            ImageUtils.saveBitmap(mCroppedBitmap);
         }
 
-        handler.post(
+        mInferenceHandler.post(
                 new Runnable() {
                     @Override
                     public void run() {
-                        List<VisionDetRet> results;
-                        synchronized (OnGetImageListener.this) {
-                            results = mPeopleDet.detBitmapFace(croppedBitmap);
-                            Log.d(TAG, String.format("%d results", results.size()));
-                            mScoreview.setResults(results);
+                        final String targetPath = Constants.getFaceShapeModelPath();
+                        if (!new File(targetPath).exists()) {
+                            mTransparentTitleView.setText("Copying Landmarkd model to " + targetPath);
+                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, targetPath);
                         }
 
+                        long startTime = System.currentTimeMillis();
+                        List<VisionDetRet> results;
+                        synchronized (OnGetImageListener.this) {
+                            results = mPeopleDet.detBitmapFace(mCroppedBitmap);
+                        }
+                        long endTime = System.currentTimeMillis();
+                        mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime-startTime) / 1000f) + " sec");
                         // Draw on bitmap
                         if (results != null) {
                             for (final VisionDetRet ret : results) {
@@ -240,7 +246,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 bounds.top = (int) (ret.getTop() * resizeRatio);
                                 bounds.right = (int) (ret.getRight() * resizeRatio);
                                 bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-                                Canvas canvas = new Canvas(croppedBitmap);
+                                Canvas canvas = new Canvas(mCroppedBitmap);
                                 canvas.drawRect(bounds, mFaceLandmardkPaint);
 
                                 String label = ret.getLabel();
@@ -262,8 +268,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             }
                         }
 
-                        mWindow.setRGBBitmap(croppedBitmap);
-                        computing = false;
+                        mWindow.setRGBBitmap(mCroppedBitmap);
+                        mIsComputing = false;
                     }
                 });
 

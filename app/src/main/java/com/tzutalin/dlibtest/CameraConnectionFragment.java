@@ -74,7 +74,7 @@ public class CameraConnectionFragment extends Fragment {
     private static final int MINIMUM_PREVIEW_SIZE = 320;
     private static final String TAG = "CameraConnectionFragment";
 
-    private RecognitionScoreView mScoreView;
+    private TrasparentTitleView mScoreView;
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -291,7 +291,7 @@ public class CameraConnectionFragment extends Fragment {
     @Override
     public void onViewCreated(final View view, final Bundle savedInstanceState) {
         textureView = (AutoFitTextureView) view.findViewById(R.id.texture);
-        mScoreView = (RecognitionScoreView) view.findViewById(R.id.results);
+        mScoreView = (TrasparentTitleView) view.findViewById(R.id.results);
     }
 
     @Override

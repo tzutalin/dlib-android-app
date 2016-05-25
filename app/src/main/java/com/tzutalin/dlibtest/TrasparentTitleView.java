@@ -19,49 +19,47 @@ package com.tzutalin.dlibtest;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
-import com.tzutalin.dlib.VisionDetRet;
-
-import java.util.List;
-
-public class RecognitionScoreView extends View {
+public class TrasparentTitleView extends View {
     private static final float TEXT_SIZE_DIP = 24;
     private static final String TAG = "RecognitionScoreView";
-    private List<VisionDetRet> results;
-    private final float textSizePx;
-    private final Paint fgPaint;
-    private final Paint bgPaint;
+    private String mShowText;
+    private final float mTextSizePx;
+    private final Paint mFgPaint;
+    private final Paint mBgPaint;
 
-    public RecognitionScoreView(final Context context, final AttributeSet set) {
+    public TrasparentTitleView(final Context context, final AttributeSet set) {
         super(context, set);
 
-        textSizePx =
+        mTextSizePx =
                 TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
-        fgPaint = new Paint();
-        fgPaint.setTextSize(textSizePx);
+        mFgPaint = new Paint();
+        mFgPaint.setTextSize(mTextSizePx);
 
-        bgPaint = new Paint();
-        bgPaint.setColor(0xcc4285f4);
+        mBgPaint = new Paint();
+        mBgPaint.setColor(0xcc4285f4);
     }
 
-    public void setResults(final List<VisionDetRet> results) {
-        this.results = results;
+    @NonNull
+    public void setText(@NonNull String text) {
+        this.mShowText = text;
         postInvalidate();
     }
 
     @Override
     public void onDraw(final Canvas canvas) {
         final int x = 10;
-        int y = (int) (fgPaint.getTextSize() * 1.5f);
+        int y = (int) (mFgPaint.getTextSize() * 1.5f);
 
-        canvas.drawPaint(bgPaint);
+        canvas.drawPaint(mBgPaint);
 
-        if (results != null) {
-            canvas.drawText("Total faces: " + results.size(), x, y, fgPaint);
+        if (mShowText != null) {
+            canvas.drawText(mShowText, x, y, mFgPaint);
         }
     }
 }

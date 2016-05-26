@@ -16,12 +16,14 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 
 * HOG Face detection
 
-* Facial Landmark
+* Facial Landmark/Expression
 
 ### Demo
 ![](demo/demo1.png)
 ![](demo/demo2.png)
 ![](demo/demo3.png)
+
+[![Demo video](https://gifs.com/gif/n5P3GD)](https://www.youtube.com/watch?v=5mqVzKdexzw&feature=youtu.be)
 
 ### Build
 

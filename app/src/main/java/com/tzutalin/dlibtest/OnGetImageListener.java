@@ -226,7 +226,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     public void run() {
                         final String targetPath = Constants.getFaceShapeModelPath();
                         if (!new File(targetPath).exists()) {
-                            mTransparentTitleView.setText("Copying Landmarkd model to " + targetPath);
+                            mTransparentTitleView.setText("Copying landmark model to " + targetPath);
                             FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, targetPath);
                         }
 

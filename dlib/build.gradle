@@ -159,7 +159,12 @@ artifacts {
 }
 
 Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
+// Search Local.Properties file
+try {
+	properties.load(project.rootProject.file('local.properties').newDataInputStream())
+} catch (java.io.FileNotFoundException e) {
+	println 'local.properties file not found'
+}
 
 bintray {
     user = properties.getProperty("bintray.user")

@@ -1,6 +1,7 @@
 ## dlib-android-app
 
 [![Build Status](https://travis-ci.org/tzutalin/dlib-android-app.png)](https://travis-ci.org/tzutalin/dlib-android-app)
+[ ![Download](https://api.bintray.com/packages/tzutalin/maven/dlib-android-java/images/download.svg) ](https://bintray.com/tzutalin/maven/dlib-android-java/_latestVersion)
 
 See http://dlib.net for the main project documentation.
 
@@ -23,7 +24,7 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 ![](demo/demo2.png)
 ![](demo/demo3.png)
 
-[![Demo video](https://gifs.com/gif/n5P3GD)](https://www.youtube.com/watch?v=5mqVzKdexzw&feature=youtu.be)
+[![Demo video](https://j.gifs.com/n5P3GD.gif)](https://www.youtube.com/watch?v=5mqVzKdexzw&feature=youtu.be)
 
 ### Build
 
@@ -53,7 +54,19 @@ Copy the shared libray to ./dlib/src/main/jniLibs/
 
 or 
 
-Download and import dlib-debug.aar to AndroidStudio
+Import to your Android project. Add the belows to your build.gradle
 
-###License
-`Copyright 2015 TzuTa Lin`
+```
+	repositories {
+		maven {
+			url 'https://dl.bintray.com/tzutalin/maven'
+		}
+	}
+
+	dependencies {
+		compile 'com.tzutalin.dlib:dlib:0.0.3'
+	}
+```
+
+### License
+[License](LICENSE.md)

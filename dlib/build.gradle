@@ -39,7 +39,7 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
-    javadocDeps "com.android.support:appcompat-v7；${rootProject.ext.androidSupportSdkVersion}"
+    javadocDeps "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
     compile "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
     javadocDeps "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
 }
@@ -149,6 +149,7 @@ task generateJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath()
             .join(File.pathSeparator))
+    classpath += configurations.javadocDeps
 }
 
 task generateJavadocsJar(type: Jar) {
@@ -179,10 +180,10 @@ bintray {
         repo = "maven"
         name = "dlib-android-java"
         version {
-            name = '0.0.4'
-            desc = 'second upload'
+            name = '0.0.5'
+            desc = 'An Android library to wrap dlib library'
             released  = new Date()
-            vcsTag = '0.0.4'
+            vcsTag = '0.0.5'
         }
 
         websiteUrl = siteUrl

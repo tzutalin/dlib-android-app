@@ -64,7 +64,7 @@ Import to your Android project. Add the belows to your build.gradle
 	}
 
 	dependencies {
-		compile 'com.tzutalin.dlib:dlib:0.0.3'
+		compile 'com.tzutalin.dlib:dlib:0.0.5'
 	}
 ```
 

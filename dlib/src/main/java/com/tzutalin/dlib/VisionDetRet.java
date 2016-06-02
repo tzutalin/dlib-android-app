@@ -20,6 +20,9 @@ package com.tzutalin.dlib;
  * Created by Tzutalin on 2015/10/20.
  */
 
+import android.hardware.camera2.params.Face;
+import android.text.TextUtils;
+
 /**
  * A VisionDetRet contains all the information identifying the location and confidence value of the detected object in a bitmap.
  */
@@ -30,18 +33,18 @@ public final class VisionDetRet {
     private int mTop;
     private int mRight;
     private int mBottom;
+    private FaceLandmark mFaceLandmark;
 
     VisionDetRet() {
     }
 
     /**
-     *
-     * @param label Label name
-     * @param confidence  A confidence factor between 0 and 1. This indicates how certain what has been found is actually the label.
-     * @param l The X coordinate of the left side of the result
-     * @param t The Y coordinate of the top of the result
-     * @param r The X coordinate of the right side of the result
-     * @param b The Y coordinate of the bottom of the result
+     * @param label      Label name
+     * @param confidence A confidence factor between 0 and 1. This indicates how certain what has been found is actually the label.
+     * @param l          The X coordinate of the left side of the result
+     * @param t          The Y coordinate of the top of the result
+     * @param r          The X coordinate of the right side of the result
+     * @param b          The Y coordinate of the bottom of the result
      */
     public VisionDetRet(String label, float confidence, int l, int t, int r, int b) {
         mLabel = label;
@@ -81,18 +84,29 @@ public final class VisionDetRet {
     }
 
     /**
-     * @return  A confidence factor between 0 and 1. This indicates how certain what has been found is actually the label.
+     * @return A confidence factor between 0 and 1. This indicates how certain what has been found is actually the label.
      */
     public float getConfidence() {
         return mConfidence;
     }
 
     /**
-     *
      * @return The label of the result
      */
     public String getLabel() {
         return mLabel;
+    }
+
+    /**
+     * Get the landmarks of face if exists
+     * @return FaceLandmark
+     */
+    public FaceLandmark getFaceLandmark() {
+        if (!TextUtils.isEmpty(mLabel)) {
+            // Get face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
+            mFaceLandmark = new FaceLandmark(mLabel);
+        }
+        return mFaceLandmark;
     }
 
     @Override

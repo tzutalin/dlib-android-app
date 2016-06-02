@@ -38,6 +38,7 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.tzutalin.dlib.Constants;
+import com.tzutalin.dlib.FaceLandmark;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
@@ -50,8 +51,6 @@ import java.util.List;
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
 public class OnGetImageListener implements OnImageAvailableListener {
-    private static final Logger LOGGER = new Logger();
-
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
     private static final int NUM_CLASSES = 1001;
@@ -173,7 +172,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mPreviewWdith = image.getWidth();
                 mPreviewHeight = image.getHeight();
 
-                LOGGER.i("Initializing at size %dx%d", mPreviewWdith, mPreviewHeight);
+                Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWdith, mPreviewHeight));
                 mRGBBytes = new int[mPreviewWdith * mPreviewHeight];
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWdith, mPreviewHeight, Config.ARGB_8888);
                 mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
@@ -208,7 +207,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (image != null) {
                 image.close();
             }
-            LOGGER.e(e, "Exception!");
+            Log.e(TAG, "Exception!", e);
             Trace.endSection();
             return;
         }
@@ -236,7 +235,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             results = mPeopleDet.detBitmapFace(mCroppedBitmap);
                         }
                         long endTime = System.currentTimeMillis();
-                        mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime-startTime) / 1000f) + " sec");
+                        mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                         // Draw on bitmap
                         if (results != null) {
                             for (final VisionDetRet ret : results) {
@@ -249,19 +248,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 Canvas canvas = new Canvas(mCroppedBitmap);
                                 canvas.drawRect(bounds, mFaceLandmardkPaint);
 
-                                String label = ret.getLabel();
-                                Log.d(TAG, "draw label: " + label);
-                                // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
-                                if (label.startsWith("face_landmarks ")) {
-                                    String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
-                                    for (String landmarkStr : landmarkStrs) {
-                                        String[] xyStrs = landmarkStr.split(",");
-                                        int pointX = Integer.parseInt(xyStrs[0]);
-                                        int pointY = Integer.parseInt(xyStrs[1]);
-                                        pointX = (int) (pointX * resizeRatio);
-                                        pointY = (int) (pointY * resizeRatio);
-
-                                        Log.d(TAG, String.format("draw (%d, %d)", pointX, pointY));
+                                // Draw landmark
+                                FaceLandmark landmark = ret.getFaceLandmark();
+                                if (landmark != null) {
+                                    for (int index = 0 ; index != landmark.getLandmarkPointSize(); index++) {
+                                        Point point = landmark.getLandmarkPoint(index);
+                                        int pointX = (int) (point.x * resizeRatio);
+                                        int pointY = (int) (point.y * resizeRatio);
                                         canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
                                     }
                                 }

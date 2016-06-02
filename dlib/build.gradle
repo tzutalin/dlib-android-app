@@ -12,7 +12,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
-        versionName "0.0.3"
+        versionName "${rootProject.ext.releaseVersionName}"
     }
 
     buildTypes {
@@ -31,10 +31,17 @@ android {
 
 }
 
+configurations {
+    javadocDeps
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
+    javadocDeps "com.android.support:appcompat-v7；${rootProject.ext.androidSupportSdkVersion}"
+    compile "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
+    javadocDeps "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
 }
 
 buildscript {
@@ -46,8 +53,6 @@ buildscript {
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
     }
 }
-
-apply plugin: 'com.android.library'
 apply plugin: 'com.jakewharton.hugo'
 
 // call regular ndk-build(.cmd) script from app directory
@@ -98,7 +103,6 @@ def NDKCommand() {
     }
 }
 
-//
 def siteUrl = 'https://github.com/tzutalin/dlib-android-app'      // Homepage URL of the library
 def gitUrl = 'https://github.com/tzutalin/dlib-android-app.git'   // Git repository URL
 group = "com.tzutalin.dlib"                                        // Maven Group ID for the artifact
@@ -175,10 +179,10 @@ bintray {
         repo = "maven"
         name = "dlib-android-java"
         version {
-            name = '0.0.3'
+            name = '0.0.4'
             desc = 'second upload'
             released  = new Date()
-            vcsTag = '0.0.3'
+            vcsTag = '0.0.4'
         }
 
         websiteUrl = siteUrl

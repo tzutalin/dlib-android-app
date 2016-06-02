@@ -15,6 +15,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -34,6 +35,7 @@ import com.dexafree.materialList.card.Card;
 import com.dexafree.materialList.card.provider.BigImageCardProvider;
 import com.dexafree.materialList.view.MaterialListView;
 import com.tzutalin.dlib.Constants;
+import com.tzutalin.dlib.FaceLandmark;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
@@ -327,20 +329,14 @@ public class MainActivity extends AppCompatActivity {
             bounds.top = (int) (ret.getTop() * resizeRatio);
             bounds.right = (int) (ret.getRight() * resizeRatio);
             bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-
             canvas.drawRect(bounds, paint);
-
-            String label = ret.getLabel();
-            // Draw face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
-            Log.d(TAG, "drawRect: label->" + label);
-            if (label.startsWith("face_landmarks ")) {
-                String[] landmarkStrs = label.replaceFirst("face_landmarks ", "").split(":");
-                for (String landmarkStr : landmarkStrs) {
-                    String[] xyStrs = landmarkStr.split(",");
-                    int pointX = Integer.parseInt(xyStrs[0]);
-                    int pointY = Integer.parseInt(xyStrs[1]);
-                    pointX = (int) (pointX * resizeRatio);
-                    pointY = (int) (pointY * resizeRatio);
+            // Get landmark
+            FaceLandmark landmark = ret.getFaceLandmark();
+            if (landmark != null) {
+                for (int index = 0 ; index != landmark.getLandmarkPointSize(); index++) {
+                    Point point = landmark.getLandmarkPoint(index);
+                    int pointX = (int) (point.x * resizeRatio);
+                    int pointY = (int) (point.y * resizeRatio);
                     canvas.drawCircle(pointX, pointY, 2, paint);
                 }
             }

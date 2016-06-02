@@ -1,6 +1,7 @@
 ## dlib-android-app
 
 [![Build Status](https://travis-ci.org/tzutalin/dlib-android-app.png)](https://travis-ci.org/tzutalin/dlib-android-app)
+[ ![Download](https://api.bintray.com/packages/tzutalin/maven/dlib-android-app/images/download.svg) ](https://bintray.com/tzutalin/maven/dlib-android-app/_latestVersion)
 
 See http://dlib.net for the main project documentation.
 
@@ -49,13 +50,24 @@ Copy the shared libray to ./dlib/src/main/jniLibs/
 
 ### Try directly
 
+Install the apk
+
 `$ adb install demo/app-debug.apk`
 
-or
+Otherwise, import the library to your build.gradle
 
-Download dlib-aar and impoprt to your Android studio
+```
+repositories {
+    maven {
+        url 'https://dl.bintray.com/tzutalin/maven'
+    }
+}
 
-`demo/dlib-versionName.aar`
+dependencies {
+    compile 'com.tzutalin.dlib-android-app:dlib:1.0.1'
+}
+
+```
 
 ### License
 [License](LICENSE.md)

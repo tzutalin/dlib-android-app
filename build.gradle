@@ -27,7 +27,7 @@ ext {
     artifactDescription = 'An Android library to wrap dlib library'
     artifactLabels = ['dlib', 'android']
     releaseVersionCode = 1
-    releaseVersionName = '1.0.0'
+    releaseVersionName = '1.0.1'
 
     androidBuildToolsVersion = '23.0.3'
     androidSupportSdkVersion = '23.3.0'

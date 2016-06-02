@@ -11,7 +11,7 @@ android {
     buildToolsVersion "${rootProject.ext.androidBuildToolsVersion}"
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 14
         targetSdkVersion 23
         versionCode 1
         versionName "${rootProject.ext.releaseVersionName}"
@@ -184,7 +184,7 @@ if(project.rootProject.file('local.properties').isFile()) {
         configurations = ['archives']
         pkg {
             repo = "maven"
-            name = "dlib-android"
+            name = "dlib-android-app"
             version {
                 name = "${rootProject.ext.releaseVersionName}"
                 desc = 'An Android library to wrap dlib library'

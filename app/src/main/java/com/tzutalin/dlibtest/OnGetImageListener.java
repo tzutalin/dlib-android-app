@@ -232,7 +232,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         long startTime = System.currentTimeMillis();
                         List<VisionDetRet> results;
                         synchronized (OnGetImageListener.this) {
-                            results = mPeopleDet.detBitmapFace(mCroppedBitmap);
+                            results = mPeopleDet.detBitmapFace(mCroppedBitmap, targetPath);
                         }
                         long endTime = System.currentTimeMillis();
                         mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");

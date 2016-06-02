@@ -74,15 +74,9 @@ public class PeopleDet {
     @DebugLog
     @Nullable
     @WorkerThread
-    public List<VisionDetRet> detFace(@NonNull final String path) {
+    public List<VisionDetRet> detFace(@NonNull final String path, @NonNull String landmarkModelPath) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
-        String landmarkPath = "";
-        // If landmark exits in sdcard, then use it
-        if (new File(Constants.getFaceShapeModelPath()).exists()) {
-            landmarkPath = Constants.getFaceShapeModelPath();
-        }
-
-        int size = jniDLibHOGFaceDetect(path, landmarkPath);
+        int size = jniDLibHOGFaceDetect(path, landmarkModelPath);
         for (int i = 0; i != size; i++) {
             VisionDetRet det = new VisionDetRet();
             int success = jniGetDLibHOGFaceRet(det, i);
@@ -102,14 +96,10 @@ public class PeopleDet {
      * @return The list of VisionDetRets
      */
     @NonNull
-    public List<VisionDetRet> detBitmapFace(@NonNull Bitmap bitmap) {
+    @DebugLog
+    public List<VisionDetRet> detBitmapFace(@NonNull Bitmap bitmap, @NonNull String landmarkModelPath) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
-        String landmarkPath = "";
-        if (new File(Constants.getFaceShapeModelPath()).exists()) {
-            landmarkPath = Constants.getFaceShapeModelPath();
-        }
-        Log.d(TAG, "landmark file " + landmarkPath);
-        int size = jniBitmapFaceDect(bitmap, landmarkPath);
+        int size = jniBitmapFaceDect(bitmap, landmarkModelPath);
         for (int i = 0; i != size; i++) {
             VisionDetRet det = new VisionDetRet();
             int success = jniGetDLibHOGFaceRet(det, i);

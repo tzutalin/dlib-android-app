@@ -1,8 +1,10 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'com.github.dcendents.android-maven'
+
+// required by POM
+version = "${rootProject.ext.releaseVersionName}"
+group = "com.tzutalin.dlib-android-app"
 
 android {
     compileSdkVersion 23
@@ -19,6 +21,12 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    android {
+        lintOptions {
+            abortOnError false
         }
     }
 
@@ -103,9 +111,11 @@ def NDKCommand() {
     }
 }
 
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+
 def siteUrl = 'https://github.com/tzutalin/dlib-android-app'      // Homepage URL of the library
 def gitUrl = 'https://github.com/tzutalin/dlib-android-app.git'   // Git repository URL
-group = "com.tzutalin.dlib"                                        // Maven Group ID for the artifact
 
 install {
     repositories.mavenInstaller {
@@ -164,32 +174,29 @@ artifacts {
 }
 
 Properties properties = new Properties()
-// Search Local.Properties file
-try {
-	properties.load(project.rootProject.file('local.properties').newDataInputStream())
-} catch (java.io.FileNotFoundException e) {
-	println 'local.properties file not found'
-}
+if(project.rootProject.file('local.properties').isFile()) {
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
+    bintray {
+        user = properties.getProperty("bintray.user")
+        key = properties.getProperty("bintray.apikey")
 
-    configurations = ['archives']
-    pkg {
-        repo = "maven"
-        name = "dlib-android-java"
-        version {
-            name = '0.0.5'
-            desc = 'An Android library to wrap dlib library'
-            released  = new Date()
-            vcsTag = '0.0.5'
+        configurations = ['archives']
+        pkg {
+            repo = "maven"
+            name = "dlib-android"
+            version {
+                name = "${rootProject.ext.releaseVersionName}"
+                desc = 'An Android library to wrap dlib library'
+                released  = new Date()
+                vcsTag = "${rootProject.ext.releaseVersionName}"
+            }
+
+            websiteUrl = siteUrl
+            vcsUrl = gitUrl
+            licenses = ["Apache-2.0"]
+            publish = true
         }
-
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = ["Apache-2.0"]
-        publish = true
+        configurations = ['archives']
     }
-    configurations = ['archives']
 }

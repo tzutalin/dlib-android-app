@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Background
     @NonNull
-    protected void runDetectAsync(@NonNull String path) {
+    protected void runDetectAsync(@NonNull String imgPath) {
         showDiaglog();
 
         final String targetPath = Constants.getFaceShapeModelPath();
@@ -224,14 +224,14 @@ public class MainActivity extends AppCompatActivity {
             FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
         }
 
-        Log.d(TAG, "Image path: " + path);
+        Log.d(TAG, "Image path: " + imgPath);
         List<Card> cardrets = new ArrayList<>();
         PeopleDet peopleDet = new PeopleDet();
-        List<VisionDetRet> personList = peopleDet.detPerson(path);
+        List<VisionDetRet> personList = peopleDet.detPerson(imgPath);
         if (personList.size() > 0) {
             Card card = new Card.Builder(MainActivity.this)
                     .withProvider(BigImageCardProvider.class)
-                    .setDrawable(drawRect(path, personList, Color.BLUE))
+                    .setDrawable(drawRect(imgPath, personList, Color.BLUE))
                     .setTitle("Person det")
                     .endConfig()
                     .build();
@@ -245,11 +245,16 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        List<VisionDetRet> faceList = peopleDet.detFace(path);
+        String landmarkPath = "";
+        // If landmark exits in sdcard, then use it
+        if (new File(Constants.getFaceShapeModelPath()).exists()) {
+            landmarkPath = Constants.getFaceShapeModelPath();
+        }
+        List<VisionDetRet> faceList = peopleDet.detFace(imgPath, landmarkPath);
         if (faceList.size() > 0) {
             Card card = new Card.Builder(MainActivity.this)
                     .withProvider(BigImageCardProvider.class)
-                    .setDrawable(drawRect(path, faceList, Color.GREEN))
+                    .setDrawable(drawRect(imgPath, faceList, Color.GREEN))
                     .setTitle("Face det")
                     .endConfig()
                     .build();

@@ -55,7 +55,7 @@ import hugo.weaving.DebugLog;
 @EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
-    private static final int RESULT_PERMISSION = 2;
+    private static final int REQUEST_CODE_PERMISSION = 2;
 
     private static final String TAG = "MainActivity";
 
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
 
-        if (currentapiVersion >= Build.VERSION_CODES.M && verifyPermissions(this)) {
+        if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
         }
     }
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_REQ,
-                    RESULT_PERMISSION
+                    REQUEST_CODE_PERMISSION
             );
             return false;
         } else {
@@ -175,6 +175,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CODE_PERMISSION) {
+            Toast.makeText(MainActivity.this, "Demo using static images", Toast.LENGTH_SHORT).show();
+            demoStaticImage();
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         try {
@@ -193,8 +202,6 @@ public class MainActivity extends AppCompatActivity {
                     runDetectAsync(mTestImgPath);
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
-            } else if (requestCode == RESULT_PERMISSION) {
-                demoStaticImage();
             } else {
                 Toast.makeText(this, "You haven't picked Image", Toast.LENGTH_LONG).show();
             }
@@ -338,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
             // Get landmark
             FaceLandmark landmark = ret.getFaceLandmark();
             if (landmark != null) {
-                for (int index = 0 ; index != landmark.getLandmarkPointSize(); index++) {
+                for (int index = 0; index != landmark.getLandmarkPointSize(); index++) {
                     Point point = landmark.getLandmarkPoint(index);
                     int pointX = (int) (point.x * resizeRatio);
                     int pointY = (int) (point.y * resizeRatio);

@@ -47,6 +47,7 @@ import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
+import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -334,13 +335,38 @@ public class CameraConnectionFragment extends Fragment {
         final Activity activity = getActivity();
         final CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
+            SparseArray<Integer> cameraFaceTypeMap = new SparseArray<>();
+            // Check the facing types of camera devices
             for (final String cameraId : manager.getCameraIdList()) {
                 final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-
-                // We don't use a front facing camera in this sample.
                 final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
+                    if (cameraFaceTypeMap.get(CameraCharacteristics.LENS_FACING_FRONT) != null) {
+                        cameraFaceTypeMap.append(CameraCharacteristics.LENS_FACING_FRONT, cameraFaceTypeMap.get(CameraCharacteristics.LENS_FACING_FRONT) + 1);
+                    } else {
+                        cameraFaceTypeMap.append(CameraCharacteristics.LENS_FACING_FRONT, 1);
+                    }
+                }
+
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                    if (cameraFaceTypeMap.get(CameraCharacteristics.LENS_FACING_FRONT) != null) {
+                        cameraFaceTypeMap.append(CameraCharacteristics.LENS_FACING_BACK, cameraFaceTypeMap.get(CameraCharacteristics.LENS_FACING_BACK) + 1);
+                    } else {
+                        cameraFaceTypeMap.append(CameraCharacteristics.LENS_FACING_BACK, 1);
+                    }
+                }
+            }
+
+            Integer num_facing_back_camera = cameraFaceTypeMap.get(CameraCharacteristics.LENS_FACING_BACK);
+            for (final String cameraId : manager.getCameraIdList()) {
+                final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+                final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                // If facing back camera or facing external camera exist, we won't use facing front camera
+                if (num_facing_back_camera != null && num_facing_back_camera > 0) {
+                    // We don't use a front facing camera in this sample if there are other camera device facing types
+                    if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                        continue;
+                    }
                 }
 
                 final StreamConfigurationMap map =

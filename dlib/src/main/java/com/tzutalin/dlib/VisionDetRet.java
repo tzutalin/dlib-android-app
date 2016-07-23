@@ -106,7 +106,7 @@ public final class VisionDetRet {
     public String landmarksToString() {
         String result = "Face Landmarks: ";
         for (Point p : mLandmarkPoints) {
-            result.concat(p.toString() + ";");
+            result += p.toString() + ";";
         }
         return result;
     }

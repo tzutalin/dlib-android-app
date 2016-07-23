@@ -20,20 +20,20 @@ package com.tzutalin.dlib;
  * Created by Tzutalin on 2015/10/20.
  */
 
-import android.hardware.camera2.params.Face;
-import android.text.TextUtils;
+import android.graphics.Point;
+
+import java.util.ArrayList;
 
 /**
  * A VisionDetRet contains all the information identifying the location and confidence value of the detected object in a bitmap.
  */
 public final class VisionDetRet {
-    private String mLabel;
     private float mConfidence;
     private int mLeft;
     private int mTop;
     private int mRight;
     private int mBottom;
-    private FaceLandmark mFaceLandmark;
+    private ArrayList<Point> mLandmarkPoints;
 
     VisionDetRet() {
     }
@@ -47,12 +47,12 @@ public final class VisionDetRet {
      * @param b          The Y coordinate of the bottom of the result
      */
     public VisionDetRet(String label, float confidence, int l, int t, int r, int b) {
-        mLabel = label;
         mLeft = l;
         mTop = t;
         mRight = r;
         mBottom = b;
         mConfidence = confidence;
+        mLandmarkPoints = new ArrayList<>();
     }
 
     /**
@@ -91,29 +91,31 @@ public final class VisionDetRet {
     }
 
     /**
-     * @return The label of the result
-     */
-    public String getLabel() {
-        return mLabel;
-    }
-
-    /**
      * Get the landmarks of face if exists
+     *
      * @return FaceLandmark
      */
-    public FaceLandmark getFaceLandmark() {
-        if (!TextUtils.isEmpty(mLabel)) {
-            // Get face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
-            mFaceLandmark = new FaceLandmark(mLabel);
+    public ArrayList<Point> getFaceLandmarks() {
+        return mLandmarkPoints;
+    }
+
+    public boolean addLandmark(int x, int y) {
+        return mLandmarkPoints.add(new Point(x, y));
+    }
+
+    public String landmarksToString() {
+        String result = "Face Landmarks: ";
+        for (Point p : mLandmarkPoints) {
+            result.concat(p.toString() + ";");
         }
-        return mFaceLandmark;
+        return result;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Left:");
-        sb.append(mLabel);
+        sb.append(mLeft);
         sb.append(", Top:");
         sb.append(mTop);
         sb.append(", Right:");
@@ -121,7 +123,7 @@ public final class VisionDetRet {
         sb.append(", Bottom:");
         sb.append(mBottom);
         sb.append(", Label:");
-        sb.append(mLabel);
+        sb.append(landmarksToString());
         return sb.toString();
     }
 }

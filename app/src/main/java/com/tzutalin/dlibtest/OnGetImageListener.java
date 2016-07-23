@@ -38,13 +38,13 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.tzutalin.dlib.Constants;
-import com.tzutalin.dlib.FaceLandmark;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -249,14 +249,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 canvas.drawRect(bounds, mFaceLandmardkPaint);
 
                                 // Draw landmark
-                                FaceLandmark landmark = ret.getFaceLandmark();
-                                if (landmark != null) {
-                                    for (int index = 0 ; index != landmark.getLandmarkPointSize(); index++) {
-                                        Point point = landmark.getLandmarkPoint(index);
-                                        int pointX = (int) (point.x * resizeRatio);
-                                        int pointY = (int) (point.y * resizeRatio);
-                                        canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
-                                    }
+                                ArrayList<Point> landmarks = ret.getFaceLandmarks();
+                                for (int index = 0 ; index != landmarks.size(); index++) {
+                                    Point point = landmarks.get(index);
+                                    int pointX = (int) (point.x * resizeRatio);
+                                    int pointY = (int) (point.y * resizeRatio);
+                                    canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
                                 }
                             }
                         }

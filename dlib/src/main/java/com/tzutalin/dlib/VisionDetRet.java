@@ -20,8 +20,9 @@ package com.tzutalin.dlib;
  * Created by Tzutalin on 2015/10/20.
  */
 
-import android.hardware.camera2.params.Face;
-import android.text.TextUtils;
+import android.graphics.Point;
+
+import java.util.ArrayList;
 
 /**
  * A VisionDetRet contains all the information identifying the location and confidence value of the detected object in a bitmap.
@@ -33,7 +34,7 @@ public final class VisionDetRet {
     private int mTop;
     private int mRight;
     private int mBottom;
-    private FaceLandmark mFaceLandmark;
+    private ArrayList<Point> mLandmarkPoints = new ArrayList<>();
 
     VisionDetRet() {
     }
@@ -98,15 +99,21 @@ public final class VisionDetRet {
     }
 
     /**
-     * Get the landmarks of face if exists
-     * @return FaceLandmark
+     * Add landmark to the list. Usually, call by jni
+     * @param x
+     * @param y
+     * @return
      */
-    public FaceLandmark getFaceLandmark() {
-        if (!TextUtils.isEmpty(mLabel)) {
-            // Get face landmarks if exists.The format looks like face_landmarks 1,1:50,50,:...
-            mFaceLandmark = new FaceLandmark(mLabel);
-        }
-        return mFaceLandmark;
+    public boolean addLandmark(int x, int y) {
+        return mLandmarkPoints.add(new Point(x, y));
+    }
+
+    /**
+     * Return the list of landmark points
+     * @return ArrayList of android.graphics.Point
+     */
+    public ArrayList<Point> getFaceLandmarks() {
+        return mLandmarkPoints;
     }
 
     @Override

@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import hugo.weaving.DebugLog;
-
 /**
  * Created by Tzutalin on 2015/10/20.
  */
@@ -51,7 +49,6 @@ public class PeopleDet {
 
     protected Context mContext;
 
-    @DebugLog
     @Nullable
     @WorkerThread
     public List<VisionDetRet> detPerson(@NonNull final String path) {
@@ -71,7 +68,6 @@ public class PeopleDet {
         return ret;
     }
 
-    @DebugLog
     @Nullable
     @WorkerThread
     public List<VisionDetRet> detFace(@NonNull final String path, @NonNull String landmarkModelPath) {
@@ -90,13 +86,14 @@ public class PeopleDet {
     //Author:zhao
     //Mail:zhaotu2016@163.com
     //Date:2016/5/10
+
     /**
      * Input is bitmap
+     *
      * @param bitmap
      * @return The list of VisionDetRets
      */
     @NonNull
-    @DebugLog
     public List<VisionDetRet> detBitmapFace(@NonNull Bitmap bitmap, @NonNull String landmarkModelPath) {
         List<VisionDetRet> ret = new ArrayList<VisionDetRet>();
         int size = jniBitmapFaceDect(bitmap, landmarkModelPath);

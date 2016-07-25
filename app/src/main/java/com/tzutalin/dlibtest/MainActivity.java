@@ -35,7 +35,6 @@ import com.dexafree.materialList.card.Card;
 import com.dexafree.materialList.card.provider.BigImageCardProvider;
 import com.dexafree.materialList.view.MaterialListView;
 import com.tzutalin.dlib.Constants;
-import com.tzutalin.dlib.FaceLandmark;
 import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
@@ -343,14 +342,11 @@ public class MainActivity extends AppCompatActivity {
             bounds.bottom = (int) (ret.getBottom() * resizeRatio);
             canvas.drawRect(bounds, paint);
             // Get landmark
-            FaceLandmark landmark = ret.getFaceLandmark();
-            if (landmark != null) {
-                for (int index = 0; index != landmark.getLandmarkPointSize(); index++) {
-                    Point point = landmark.getLandmarkPoint(index);
-                    int pointX = (int) (point.x * resizeRatio);
-                    int pointY = (int) (point.y * resizeRatio);
-                    canvas.drawCircle(pointX, pointY, 2, paint);
-                }
+            ArrayList<Point> landmarks = ret.getFaceLandmarks();
+            for (Point point : landmarks) {
+                int pointX = (int) (point.x * resizeRatio);
+                int pointY = (int) (point.y * resizeRatio);
+                canvas.drawCircle(pointX, pointY, 2, paint);
             }
         }
 

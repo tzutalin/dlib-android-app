@@ -76,9 +76,13 @@ Facial landmark detection
 PeopleDet peopleDet = new PeopleDet();
 List<VisionDetRet> results = peopleDet.detBitmapFace(bitmap, Constants.getFaceShapeModelPath());
 for (final VisionDetRet ret : results) {
-    FaceLandmark landmark = ret.getFaceLandmark();
-    for (int index = 0; index != landmark.getLandmarkPointSize(); index++) {
-        Point point = landmark.getLandmarkPoint(index);
+    String label = ret.getLabel(); // If doing face detection, it will be 'Face'
+    int rectLeft = ret.getLeft();
+    int rectTop= ret.getTop();
+    int rectRight = ret.getRight();
+    int rectBottom = ret.getBottom();
+    ArrayList<Point> landmarks = ret.getFaceLandmarks();
+    for (Point point : landmarks) {
         int pointX = (int) (point.x * resizeRatio);
         int pointY = (int) (point.y * resizeRatio);
         // Get the point of the face landmarks

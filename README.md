@@ -24,7 +24,7 @@ See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer 
 ![](demo/demo2.png)
 ![](demo/demo3.png)
 
-[![Demo video](https://j.gifs.com/n5P3GD.gif)](https://www.youtube.com/watch?v=5mqVzKdexzw&feature=youtu.be)
+[![Demo video](https://j.gifs.com/82n7Oo.gif)](https://www.youtube.com/watch?v=TbX3t7QNhvs)
 
 ### Build
 

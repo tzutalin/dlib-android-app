@@ -1,5 +1,9 @@
 language: android
 script: "./gradlew assembleDebug"
+
+jdk:
+  - oraclejdk8
+
 android:
   components:
     # The BuildTools version used by your project

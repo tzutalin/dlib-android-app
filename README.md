@@ -39,9 +39,14 @@ On Windows platforms, type this command:
 
 On Mac OS and Linux platforms, type these commands:
 
-`$ chmod +x gradlew`
+```
+$ ./gradlew assembleDebug
 
-`$ ./gradlew assembleDebug`
+or
+
+$ make ; make install
+
+```
 
 #### Update shared lib (Optional)
 You can build shared library from [dlib-android](https://github.com/tzutalin/dlib-android)

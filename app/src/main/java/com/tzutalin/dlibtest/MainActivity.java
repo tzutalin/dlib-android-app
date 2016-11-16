@@ -35,7 +35,8 @@ import com.dexafree.materialList.card.Card;
 import com.dexafree.materialList.card.provider.BigImageCardProvider;
 import com.dexafree.materialList.view.MaterialListView;
 import com.tzutalin.dlib.Constants;
-import com.tzutalin.dlib.PeopleDet;
+import com.tzutalin.dlib.FaceDet;
+import com.tzutalin.dlib.PedestrianDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import org.androidannotations.annotations.AfterViews;
@@ -75,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
     protected FloatingActionButton mFabCamActionBt;
     @ViewById(R.id.toolbar)
     protected Toolbar mToolbar;
+
+    FaceDet mFaceDet;
+    PedestrianDet mPersonDet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,34 +233,17 @@ public class MainActivity extends AppCompatActivity {
             });
             FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
         }
+        // Init
+        if (mPersonDet == null) {
+            mPersonDet = new PedestrianDet();
+        }
+        if (mFaceDet == null) {
+            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        }
 
         Log.d(TAG, "Image path: " + imgPath);
         List<Card> cardrets = new ArrayList<>();
-        PeopleDet peopleDet = new PeopleDet();
-        List<VisionDetRet> personList = peopleDet.detPerson(imgPath);
-        if (personList.size() > 0) {
-            Card card = new Card.Builder(MainActivity.this)
-                    .withProvider(BigImageCardProvider.class)
-                    .setDrawable(drawRect(imgPath, personList, Color.BLUE))
-                    .setTitle("Person det")
-                    .endConfig()
-                    .build();
-            cardrets.add(card);
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        String landmarkPath = "";
-        // If landmark exits in sdcard, then use it
-        if (new File(Constants.getFaceShapeModelPath()).exists()) {
-            landmarkPath = Constants.getFaceShapeModelPath();
-        }
-        List<VisionDetRet> faceList = peopleDet.detFace(imgPath, landmarkPath);
+        List<VisionDetRet> faceList = mFaceDet.detect(imgPath);
         if (faceList.size() > 0) {
             Card card = new Card.Builder(MainActivity.this)
                     .withProvider(BigImageCardProvider.class)
@@ -270,6 +257,24 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        List<VisionDetRet> personList = mPersonDet.detect(imgPath);
+        if (personList.size() > 0) {
+            Card card = new Card.Builder(MainActivity.this)
+                    .withProvider(BigImageCardProvider.class)
+                    .setDrawable(drawRect(imgPath, personList, Color.BLUE))
+                    .setTitle("Person det")
+                    .endConfig()
+                    .build();
+            cardrets.add(card);
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
                 }
             });
         }

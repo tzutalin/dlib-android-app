@@ -1,6 +1,7 @@
 package com.tzutalin.dlib;
 
 import android.graphics.Bitmap;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -11,74 +12,72 @@ import java.util.List;
 
 /**
  * Created by houzhi on 16-10-20.
+ * Modified by tzutalin on 16-11-15
  */
-
 public class FaceDet {
+    private static final String TAG = "dlib";
 
-    private static final String TAG = "FaceDet";
-    protected static boolean sInitialized = false;
+    // accessed by native methods
+    @SuppressWarnings("unused")
+    private long mNativeFaceDetContext;
+    private String mLandMarkPath = "";
 
     static {
         try {
-            System.loadLibrary("people_det");
+            System.loadLibrary("android_dlib");
             jniNativeClassInit();
-            sInitialized = true;
             Log.d(TAG, "jniNativeClassInit success");
         } catch (UnsatisfiedLinkError e) {
-            android.util.Log.d("PeopleDet", "library not found!");
+            Log.e(TAG, "library not found");
         }
     }
 
+    @SuppressWarnings("unused")
+    public FaceDet() {
+        jniInit(mLandMarkPath);
+    }
+
+    public FaceDet(String landMarkPath) {
+        mLandMarkPath = landMarkPath;
+        jniInit(mLandMarkPath);
+    }
+
     @Nullable
     @WorkerThread
-    public List<VisionDetRet> detFace(@NonNull final String path) {
-        VisionDetRet[] detRets = jniFaceDet(path);
+    public List<VisionDetRet> detect(@NonNull String path) {
+        VisionDetRet[] detRets = jniDetect(path);
         return Arrays.asList(detRets);
     }
 
     @Nullable
     @WorkerThread
-    public List<VisionDetRet> detFaceLandmark(@NonNull String path, @NonNull String landmarkModelPath) {
-        VisionDetRet[] detRets = jniFaceLandmarkDet(path, landmarkModelPath);
+    public List<VisionDetRet> detect(@NonNull Bitmap bitmap) {
+        VisionDetRet[] detRets = jniBitmapDetect(bitmap);
         return Arrays.asList(detRets);
     }
 
-    @Nullable
-    @WorkerThread
-    public List<VisionDetRet> detBitmapFaceLandmark(@NonNull Bitmap bitmap, @NonNull String landmarkModelPath) {
-        VisionDetRet[] detRets = jniBitmapFaceLandmarkDet(bitmap, landmarkModelPath);
-        return Arrays.asList(detRets);
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        release();
     }
 
-    @Nullable
-    @WorkerThread
-    public List<VisionDetRet> detBitmapFace(@NonNull Bitmap bitmap) {
-        VisionDetRet[] detRets = jniBitmapFaceDet(bitmap);
-        return Arrays.asList(detRets);
-    }
-
-
-    public void init() {
-        jniInit();
-    }
-
-    public void deInit() {
+    public void release() {
         jniDeInit();
     }
 
+    @Keep
     private native static void jniNativeClassInit();
 
-    private native int jniInit();
+    @Keep
+    private synchronized native int jniInit(String landmarkModelPath);
 
-    private native int jniDeInit();
+    @Keep
+    private synchronized native int jniDeInit();
 
+    @Keep
+    private synchronized native VisionDetRet[] jniBitmapDetect(Bitmap bitmap);
 
-    private native VisionDetRet[] jniFaceLandmarkDet(String path, String landmarkModelPath);
-
-    private native VisionDetRet[] jniBitmapFaceLandmarkDet(Bitmap bitmap, String landmarkModelPath);
-
-    private native VisionDetRet[] jniBitmapFaceDet(Bitmap bitmap);
-
-    private native VisionDetRet[] jniFaceDet(String path);
-
+    @Keep
+    private synchronized native VisionDetRet[] jniDetect(String path);
 }

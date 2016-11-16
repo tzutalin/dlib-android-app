@@ -38,7 +38,7 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.tzutalin.dlib.Constants;
-import com.tzutalin.dlib.PeopleDet;
+import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
@@ -71,7 +71,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Handler mInferenceHandler;
 
     private Context mContext;
-    private PeopleDet mPeopleDet;
+    private FaceDet mFaceDet;
     private TrasparentTitleView mTransparentTitleView;
     private FloatingCameraWindow mWindow;
     private Paint mFaceLandmardkPaint;
@@ -84,7 +84,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         this.mContext = context;
         this.mTransparentTitleView = scoreView;
         this.mInferenceHandler = handler;
-        mPeopleDet = new PeopleDet();
+        mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = new FloatingCameraWindow(mContext);
 
         mFaceLandmardkPaint = new Paint();
@@ -95,8 +95,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     public void deInitialize() {
         synchronized (OnGetImageListener.this) {
-            if (mPeopleDet != null) {
-                mPeopleDet.deInit();
+            if (mFaceDet != null) {
+                mFaceDet.release();
             }
 
             if (mWindow != null) {
@@ -223,16 +223,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 new Runnable() {
                     @Override
                     public void run() {
-                        final String targetPath = Constants.getFaceShapeModelPath();
-                        if (!new File(targetPath).exists()) {
-                            mTransparentTitleView.setText("Copying landmark model to " + targetPath);
-                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, targetPath);
+                        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+                            mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
+                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                         }
 
                         long startTime = System.currentTimeMillis();
                         List<VisionDetRet> results;
                         synchronized (OnGetImageListener.this) {
-                            results = mPeopleDet.detBitmapFace(mCroppedBitmap, targetPath);
+                            results = mFaceDet.detect(mCroppedBitmap);
                         }
                         long endTime = System.currentTimeMillis();
                         mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");

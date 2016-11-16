@@ -1,13 +1,11 @@
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
-import com.tzutalin.dlib.PeopleDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
@@ -31,24 +29,20 @@ import static org.junit.Assert.assertThat;
 @SmallTest
 public class FaceDetTest {
 
-    private FaceDet faceDet = null;
-
     @Before
     public void setup() {
-        faceDet = new FaceDet();
-        faceDet.init();
     }
 
     @After
     public void tearDown() {
-        faceDet.deInit();
     }
 
     @Test
     public void testDetBitmapFace() {
+        FaceDet faceDet = new FaceDet(Constants.getFaceShapeModelPath());
         Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/test.jpg");
         assertThat(bitmap, notNullValue());
-        List<VisionDetRet> results = faceDet.detBitmapFace(bitmap);
+        List<VisionDetRet> results = faceDet.detect(bitmap);
         for (final VisionDetRet ret : results) {
             String label = ret.getLabel();
             int rectLeft = ret.getLeft();
@@ -58,14 +52,15 @@ public class FaceDetTest {
             assertThat(label, is("face"));
             Assert.assertTrue(rectLeft > 0);
         }
+        faceDet.release();
     }
 
     @Test
     public void testDetFace() {
         Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/test.jpg");
         assertThat(bitmap, notNullValue());
-        FaceDet faceDet = new FaceDet();
-        List<VisionDetRet> results = faceDet.detFace("/sdcard/test.jpg");
+        FaceDet faceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        List<VisionDetRet> results = faceDet.detect("/sdcard/test.jpg");
         for (final VisionDetRet ret : results) {
             String label = ret.getLabel();
             int rectLeft = ret.getLeft();
@@ -75,14 +70,15 @@ public class FaceDetTest {
             assertThat(label, is("face"));
             Assert.assertTrue(rectLeft > 0);
         }
+        faceDet.release();
     }
 
     @Test
     public void testDetBitmapFaceLandmarkDect() {
         Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/test.jpg");
         assertThat(bitmap, notNullValue());
-        FaceDet faceDet = new FaceDet();
-        List<VisionDetRet> results = faceDet.detBitmapFaceLandmark(bitmap, Constants.getFaceShapeModelPath());
+        FaceDet faceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        List<VisionDetRet> results = faceDet.detect(bitmap);
         for (final VisionDetRet ret : results) {
             String label = ret.getLabel();
             int rectLeft = ret.getLeft();
@@ -94,12 +90,13 @@ public class FaceDetTest {
             Assert.assertTrue(landmarks.size() > 0);
             Assert.assertTrue(rectLeft > 0);
         }
+        faceDet.release();
     }
 
     @Test
     public void testDetFaceLandmark() {
-        FaceDet faceDet = new FaceDet();
-        List<VisionDetRet> results = faceDet.detFaceLandmark("/sdcard/test.jpg", Constants.getFaceShapeModelPath());
+        FaceDet faceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        List<VisionDetRet> results = faceDet.detect("/sdcard/test.jpg");
         for (final VisionDetRet ret : results) {
             String label = ret.getLabel();
             int rectLeft = ret.getLeft();
@@ -110,9 +107,7 @@ public class FaceDetTest {
             assertThat(label, is("face"));
             Assert.assertTrue(landmarks.size() > 0);
             Assert.assertTrue(rectLeft > 0);
-
         }
+        faceDet.release();
     }
-
-
 }

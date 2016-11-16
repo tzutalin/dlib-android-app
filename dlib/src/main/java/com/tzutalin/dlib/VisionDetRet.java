@@ -100,9 +100,9 @@ public final class VisionDetRet {
 
     /**
      * Add landmark to the list. Usually, call by jni
-     * @param x
-     * @param y
-     * @return
+     * @param x Point x
+     * @param y Point y
+     * @return true if adding landmark successfully
      */
     public boolean addLandmark(int x, int y) {
         return mLandmarkPoints.add(new Point(x, y));

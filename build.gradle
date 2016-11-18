@@ -28,7 +28,7 @@ ext {
     artifactDescription = 'An Android library to wrap dlib library to use face and landmark detection'
     artifactLabels = ['dlib', 'android']
     releaseVersionCode = 1
-    releaseVersionName = '1.0.3'
+    releaseVersionName = '1.0.4'
 
     androidBuildToolsVersion = '23.0.3'
     androidSupportSdkVersion = '23.3.0'

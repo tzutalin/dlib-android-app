@@ -78,22 +78,31 @@ dependencies {
 
 Facial landmark detection
 ```java
-PeopleDet peopleDet = new PeopleDet();
-List<VisionDetRet> results = peopleDet.detBitmapFace(bitmap, Constants.getFaceShapeModelPath());
+FaceDet faceDet = new FaceDet(Constants.getFaceShapeModelPath());
+Bitmap bitmap = BitmapFactory.decodeFile("Image Path");
+List<VisionDetRet> results = faceDet.detect(bitmap);
 for (final VisionDetRet ret : results) {
-    String label = ret.getLabel(); // If doing face detection, it will be 'Face'
+    String label = ret.getLabel();
     int rectLeft = ret.getLeft();
-    int rectTop= ret.getTop();
+    int rectTop = ret.getTop();
     int rectRight = ret.getRight();
     int rectBottom = ret.getBottom();
+    // Get 68 landmark points
     ArrayList<Point> landmarks = ret.getFaceLandmarks();
     for (Point point : landmarks) {
-        int pointX = (int) (point.x * resizeRatio);
-        int pointY = (int) (point.y * resizeRatio);
-        // Get the point of the face landmarks
+        int pointX = point.x;
+        int pointY = point.y;
     }
 }
 ```
+
+Pedestrian detection
+
+```java
+Pedestrian pedestrianDet = new PedestrianDet();
+List<VisionDetRet> personList = pedestrianDet.detect(imgPath);
+```
+
 
 ### License
 [License](LICENSE.md)

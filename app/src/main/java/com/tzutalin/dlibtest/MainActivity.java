@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2015 TzuTaLin
+*  Copyright (C) 2015-present TzuTaLin
 */
 
 package com.tzutalin.dlibtest;
@@ -28,7 +28,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.dexafree.materialList.card.Card;
@@ -51,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
+import timber.log.Timber;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
@@ -167,10 +167,10 @@ public class MainActivity extends AppCompatActivity {
     @DebugLog
     protected void demoStaticImage() {
         if (mTestImgPath != null) {
-            Log.d(TAG, "demoStaticImage() launch a task to det");
+            Timber.tag(TAG).d("demoStaticImage() launch a task to det");
             runDetectAsync(mTestImgPath);
         } else {
-            Log.d(TAG, "demoStaticImage() mTestImgPath is null, go to gallery");
+            Timber.tag(TAG).d("demoStaticImage() mTestImgPath is null, go to gallery");
             Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
             // Create intent to Open Image applications like Gallery, Google Photos
             Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
             mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         }
 
-        Log.d(TAG, "Image path: " + imgPath);
+        Timber.tag(TAG).d("Image path: " + imgPath);
         List<Card> cardrets = new ArrayList<>();
         List<VisionDetRet> faceList = mFaceDet.detect(imgPath);
         if (faceList.size() > 0) {
@@ -326,10 +326,10 @@ public class MainActivity extends AppCompatActivity {
         float resizeRatio = 1;
         newHeight = Math.round(newWidth / aspectRatio);
         if (bm.getWidth() > MAX_SIZE && bm.getHeight() > MAX_SIZE) {
-            Log.d(TAG, "Resize Bitmap");
+            Timber.tag(TAG).d("Resize Bitmap");
             bm = getResizedBitmap(bm, newWidth, newHeight);
             resizeRatio = (float) bm.getWidth() / (float) width;
-            Log.d(TAG, "resizeRatio " + resizeRatio);
+            Timber.tag(TAG).d("resizeRatio " + resizeRatio);
         }
 
         // Create canvas to draw

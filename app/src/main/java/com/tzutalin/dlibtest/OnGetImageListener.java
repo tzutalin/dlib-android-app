@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tzutalin
+ * Copyright 2016-present Tzutalin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,9 +53,7 @@ import java.util.List;
 public class OnGetImageListener implements OnImageAvailableListener {
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
-    private static final int NUM_CLASSES = 1001;
     private static final int INPUT_SIZE = 224;
-    private static final int IMAGE_MEAN = 117;
     private static final String TAG = "OnGetImageListener";
 
     private int mScreenRotation = 90;

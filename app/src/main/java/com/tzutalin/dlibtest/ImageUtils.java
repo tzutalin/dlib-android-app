@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tzutalin
+ * Copyright 2016-present Tzutalin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.tzutalin.dlibtest;
 
 import android.graphics.Bitmap;
 import android.os.Environment;
-import android.util.Log;
+import android.support.annotation.Keep;
 
 import java.io.File;
 import java.io.FileOutputStream;
+
+import timber.log.Timber;
 
 /**
  * Utility class for manipulating images.
@@ -52,11 +54,11 @@ public class ImageUtils {
     public static void saveBitmap(final Bitmap bitmap) {
         final String root =
                 Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dlib";
-        Log.i(TAG, String.format("Saving %dx%d bitmap to %s.", bitmap.getWidth(), bitmap.getHeight(), root));
+        Timber.tag(TAG).d(String.format("Saving %dx%d bitmap to %s.", bitmap.getWidth(), bitmap.getHeight(), root));
         final File myDir = new File(root);
 
         if (!myDir.mkdirs()) {
-            Log.i(TAG, "Make dir failed");
+            Timber.tag(TAG).e("Make dir failed");
         }
 
         final String fname = "preview.png";
@@ -70,7 +72,7 @@ public class ImageUtils {
             out.flush();
             out.close();
         } catch (final Exception e) {
-            Log.e(TAG, "Exception!", e);
+            Timber.tag(TAG).e("Exception!", e);
         }
     }
 
@@ -102,6 +104,7 @@ public class ImageUtils {
      * @param halfSize      If true, downsample to 50% in each dimension, otherwise not.
      * @param output        A pre-allocated array for the ARGB 8:8:8:8 output data.
      */
+    @Keep
     public static native void convertYUV420ToARGB8888(
             byte[] y,
             byte[] u,
@@ -124,6 +127,7 @@ public class ImageUtils {
      * @param width  The width of the input image.
      * @param height The height of the input image.
      */
+    @Keep
     public static native void convertYUV420SPToRGB565(
             byte[] input, byte[] output, int width, int height);
 
@@ -137,6 +141,7 @@ public class ImageUtils {
      * @param width  The width of the input image.
      * @param height The height of the input image.
      */
+    @Keep
     public static native void convertARGB8888ToYUV420SP(
             int[] input, byte[] output, int width, int height);
 
@@ -150,6 +155,7 @@ public class ImageUtils {
      * @param width  The width of the input image.
      * @param height The height of the input image.
      */
+    @Keep
     public static native void convertRGB565ToYUV420SP(
             byte[] input, byte[] output, int width, int height);
 }

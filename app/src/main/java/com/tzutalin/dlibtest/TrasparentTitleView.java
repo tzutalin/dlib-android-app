@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tzutalin
+ * Copyright 2016-present Tzutalin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import android.view.View;
 
 public class TrasparentTitleView extends View {
     private static final float TEXT_SIZE_DIP = 24;
-    private static final String TAG = "RecognitionScoreView";
     private String mShowText;
     private final float mTextSizePx;
     private final Paint mFgPaint;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tzutalin
+ * Copyright 2016-present Tzutalin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Created by darrenl on 2016/3/30.
+ * Created by Tzutalin on 2016/3/30.
  */
 public class FileUtils {
     @NonNull

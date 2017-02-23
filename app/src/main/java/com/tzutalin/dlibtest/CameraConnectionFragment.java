@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tzutalin
+ * Copyright 2016-present Tzutalin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.util.Size;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -65,6 +64,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import hugo.weaving.DebugLog;
+import timber.log.Timber;
 
 public class CameraConnectionFragment extends Fragment {
 
@@ -261,20 +261,20 @@ public class CameraConnectionFragment extends Fragment {
         final List<Size> bigEnough = new ArrayList<Size>();
         for (final Size option : choices) {
             if (option.getHeight() >= MINIMUM_PREVIEW_SIZE && option.getWidth() >= MINIMUM_PREVIEW_SIZE) {
-                Log.i(TAG, "Adding size: " + option.getWidth() + "x" + option.getHeight());
+                Timber.tag(TAG).i("Adding size: " + option.getWidth() + "x" + option.getHeight());
                 bigEnough.add(option);
             } else {
-                Log.i(TAG, "Not adding size: " + option.getWidth() + "x" + option.getHeight());
+                Timber.tag(TAG).i("Not adding size: " + option.getWidth() + "x" + option.getHeight());
             }
         }
 
         // Pick the smallest of those, assuming we found any
         if (bigEnough.size() > 0) {
             final Size chosenSize = Collections.min(bigEnough, new CompareSizesByArea());
-            Log.i(TAG, "Chosen size: " + chosenSize.getWidth() + "x" + chosenSize.getHeight());
+            Timber.tag(TAG).i("Chosen size: " + chosenSize.getWidth() + "x" + chosenSize.getHeight());
             return chosenSize;
         } else {
-            Log.e(TAG, "Couldn't find any suitable preview size");
+            Timber.tag(TAG).e("Couldn't find any suitable preview size");
             return choices[0];
         }
     }
@@ -400,7 +400,7 @@ public class CameraConnectionFragment extends Fragment {
                 return;
             }
         } catch (final CameraAccessException e) {
-            Log.e(TAG, "Exception!",  e);
+            Timber.tag(TAG).e("Exception!", e);
         } catch (final NullPointerException e) {
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
@@ -424,12 +424,12 @@ public class CameraConnectionFragment extends Fragment {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
             if (ActivityCompat.checkSelfPermission(this.getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "checkSelfPermission CAMERA");
+                Timber.tag(TAG).w("checkSelfPermission CAMERA");
             }
             manager.openCamera(cameraId, stateCallback, backgroundHandler);
-            Log.d(TAG, "open Camera");
+            Timber.tag(TAG).d("open Camera");
         } catch (final CameraAccessException e) {
-            Log.e(TAG, "Exception!", e);
+            Timber.tag(TAG).e("Exception!", e);
         } catch (final InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
@@ -495,7 +495,7 @@ public class CameraConnectionFragment extends Fragment {
             inferenceThread = null;
             inferenceThread = null;
         } catch (final InterruptedException e) {
-            Log.e(TAG, "error" ,e );
+            Timber.tag(TAG).e("error", e);
         }
     }
 
@@ -507,13 +507,15 @@ public class CameraConnectionFragment extends Fragment {
                 public void onCaptureProgressed(
                         final CameraCaptureSession session,
                         final CaptureRequest request,
-                        final CaptureResult partialResult) {}
+                        final CaptureResult partialResult) {
+                }
 
                 @Override
                 public void onCaptureCompleted(
                         final CameraCaptureSession session,
                         final CaptureRequest request,
-                        final TotalCaptureResult result) {}
+                        final TotalCaptureResult result) {
+                }
             };
 
     /**
@@ -536,7 +538,7 @@ public class CameraConnectionFragment extends Fragment {
             previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             previewRequestBuilder.addTarget(surface);
 
-            Log.i(TAG, "Opening camera preview: " + previewSize.getWidth() + "x" + previewSize.getHeight());
+            Timber.tag(TAG).i("Opening camera preview: " + previewSize.getWidth() + "x" + previewSize.getHeight());
 
             // Create the reader for the preview frames.
             previewReader =
@@ -574,7 +576,7 @@ public class CameraConnectionFragment extends Fragment {
                                 captureSession.setRepeatingRequest(
                                         previewRequest, captureCallback, backgroundHandler);
                             } catch (final CameraAccessException e) {
-                                Log.e(TAG, "Exception!", e);
+                                Timber.tag(TAG).e("Exception!", e);
                             }
                         }
 
@@ -585,10 +587,9 @@ public class CameraConnectionFragment extends Fragment {
                     },
                     null);
         } catch (final CameraAccessException e) {
-            Log.e(TAG, "Exception!", e);
+            Timber.tag(TAG).e("Exception!", e);
         }
 
-        Log.i(TAG, "Getting assets.");
         mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler);
     }
 

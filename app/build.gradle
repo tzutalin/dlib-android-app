@@ -43,6 +43,7 @@ dependencies {
     compile "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
     compile 'com.android.support:design:23.3.0'
     compile 'com.github.dexafree:materiallist:3.0.1'
+    compile 'com.jakewharton.timber:timber:4.5.1'
     compile project(':dlib')
     apt "org.androidannotations:androidannotations:$AAVersion"
     compile "org.androidannotations:androidannotations-api:$AAVersion"

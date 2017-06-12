@@ -7,7 +7,7 @@ See http://dlib.net for the main project documentation.
 
 See [dlib-android](https://github.com/tzutalin/dlib-android) for JNI lib. Refer to dlib-android/jni/jnilib_ex
 
-###Grap the source
+### Grap the source
 
 `$ git clone https://github.com/tzutalin/dlib-android-app.git`
 

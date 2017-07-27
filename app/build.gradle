@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion rootProject.ext.androidCompileSdkVersion
     buildToolsVersion "${rootProject.ext.androidBuildToolsVersion}"
 
     defaultConfig {
         applicationId "com.tzutalin.dlibtest"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion  rootProject.ext.androidCompileSdkVersion
         versionCode 1
         versionName "${rootProject.ext.releaseVersionName}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

@@ -4,17 +4,23 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.android.tools.build:gradle:3.0.1'
         classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
         classpath "com.github.dcendents:android-maven-gradle-plugin:1.4.1"
     }
 }
 allprojects {
-    repositories {
-        jcenter()
+    allprojects {
+        repositories {
+            jcenter()
+            maven {
+                url "https://maven.google.com" // Google's Maven repository
+            }
+        }
     }
 }
 
@@ -27,10 +33,17 @@ ext {
     artifactName = 'dlib-android-app'
     artifactDescription = 'An Android library to wrap dlib library to use face and landmark detection'
     artifactLabels = ['dlib', 'android']
-    releaseVersionCode = 1
-    releaseVersionName = '1.0.4'
 
-    androidCompileSdkVersion = 25
-    androidBuildToolsVersion = '25.0.0'
+    // Version control
+    versionMajor = 2
+    versionMinor = 4
+    versionPatch = 11
+    releaseVersionCode = versionMajor * 10000 + versionMinor * 100 + versionPatch
+    releaseVersionName = "${versionMajor}.${versionMinor}.${versionPatch}"
+
+    minSdkVersion = 14
+    targetSdkVersion = 25
+    androidCompileSdkVersion = 27
+    androidBuildToolsVersion = '27.0.0'
     androidSupportSdkVersion = '25.3.1'
 }

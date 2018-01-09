@@ -19,6 +19,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,6 +29,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 import android.widget.Toast;
 
 import com.dexafree.materialList.card.Card;
@@ -38,13 +40,6 @@ import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.PedestrianDet;
 import com.tzutalin.dlib.VisionDetRet;
 
-import org.androidannotations.annotations.AfterViews;
-import org.androidannotations.annotations.Background;
-import org.androidannotations.annotations.Click;
-import org.androidannotations.annotations.EActivity;
-import org.androidannotations.annotations.UiThread;
-import org.androidannotations.annotations.ViewById;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +47,6 @@ import java.util.List;
 import hugo.weaving.DebugLog;
 import timber.log.Timber;
 
-@EActivity(R.layout.activity_main)
 public class MainActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
     private static final int REQUEST_CODE_PERMISSION = 2;
@@ -66,23 +60,21 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.CAMERA
     };
 
-    protected String mTestImgPath;
+    private String mTestImgPath;
     // UI
-    @ViewById(R.id.material_listview)
-    protected MaterialListView mListView;
-    @ViewById(R.id.fab)
-    protected FloatingActionButton mFabActionBt;
-    @ViewById(R.id.fab_cam)
-    protected FloatingActionButton mFabCamActionBt;
-    @ViewById(R.id.toolbar)
-    protected Toolbar mToolbar;
+    private MaterialListView mListView;
+    private FloatingActionButton mFabActionBt;
+    private FloatingActionButton mFabCamActionBt;
+    private Toolbar mToolbar;
 
-    FaceDet mFaceDet;
-    PedestrianDet mPersonDet;
+    private FaceDet mFaceDet;
+    private PedestrianDet mPersonDet;
+    private List<Card> mCard = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         mListView = (MaterialListView) findViewById(R.id.material_listview);
         setSupportActionBar(mToolbar);
         // Just use hugo to print log
@@ -95,24 +87,35 @@ public class MainActivity extends AppCompatActivity {
         if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
         }
+
+        setupUI();
     }
 
-    @AfterViews
     protected void setupUI() {
+        mListView = (MaterialListView)findViewById(R.id.material_listview);
+        mFabActionBt = (FloatingActionButton)findViewById(R.id.fab);
+        mFabCamActionBt = (FloatingActionButton)findViewById(R.id.fab_cam);
+        mToolbar = (Toolbar)findViewById(R.id.toolbar);
+
+        mFabActionBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // launch Gallery
+                Toast.makeText(MainActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
+                Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+            }
+        });
+
+        mFabCamActionBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, CameraActivity.class));
+            }
+        });
+
         mToolbar.setTitle(getString(R.string.app_name));
         Toast.makeText(MainActivity.this, getString(R.string.description_info), Toast.LENGTH_LONG).show();
-    }
-
-    @Click({R.id.fab})
-    protected void launchGallery() {
-        Toast.makeText(MainActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
-    }
-
-    @Click({R.id.fab_cam})
-    protected void launchCameraPreview() {
-        startActivity(new Intent(this, CameraActivity.class));
     }
 
     /**
@@ -218,84 +221,107 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================================
     private ProgressDialog mDialog;
 
-    @Background
     @NonNull
-    protected void runDetectAsync(@NonNull String imgPath) {
-        showDiaglog();
+    protected void runDetectAsync(@NonNull final String imgPath) {
+        new AsyncTask<Void, Void, List<VisionDetRet>>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                showDiaglog();
+            }
 
-        final String targetPath = Constants.getFaceShapeModelPath();
-        if (!new File(targetPath).exists()) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
-                }
-            });
-            FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
-        }
-        // Init
-        if (mPersonDet == null) {
-            mPersonDet = new PedestrianDet();
-        }
-        if (mFaceDet == null) {
-            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
-        }
-
-        Timber.tag(TAG).d("Image path: " + imgPath);
-        List<Card> cardrets = new ArrayList<>();
-        List<VisionDetRet> faceList = mFaceDet.detect(imgPath);
-        if (faceList.size() > 0) {
-            Card card = new Card.Builder(MainActivity.this)
-                    .withProvider(BigImageCardProvider.class)
-                    .setDrawable(drawRect(imgPath, faceList, Color.GREEN))
-                    .setTitle("Face det")
-                    .endConfig()
-                    .build();
-            cardrets.add(card);
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+            @Override
+            protected void onPostExecute(List<VisionDetRet> faceList) {
+                super.onPostExecute(faceList);
+                if (faceList.size() > 0) {
+                    Card card = new Card.Builder(MainActivity.this)
+                            .withProvider(BigImageCardProvider.class)
+                            .setDrawable(drawRect(imgPath, faceList, Color.GREEN))
+                            .setTitle("Face det")
+                            .endConfig()
+                            .build();
+                    mCard.add(card);
+                } else {
                     Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
+                updateCardListView();
+                dismissDialog();
+            }
 
-        List<VisionDetRet> personList = mPersonDet.detect(imgPath);
-        if (personList.size() > 0) {
-            Card card = new Card.Builder(MainActivity.this)
-                    .withProvider(BigImageCardProvider.class)
-                    .setDrawable(drawRect(imgPath, personList, Color.BLUE))
-                    .setTitle("Person det")
-                    .endConfig()
-                    .build();
-            cardrets.add(card);
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+            @Override
+            protected List<VisionDetRet> doInBackground(Void... voids) {
+                // Init
+                if (mFaceDet == null) {
+                    mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+                }
+
+                final String targetPath = Constants.getFaceShapeModelPath();
+                if (!new File(targetPath).exists()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
+                }
+
+                List<VisionDetRet> faceList = mFaceDet.detect(imgPath);
+                return faceList;
+            }
+        }.execute();
+
+        new AsyncTask<Void, Void, List<VisionDetRet>>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                showDiaglog();
+            }
+
+            @Override
+            protected void onPostExecute(List<VisionDetRet> personList) {
+                super.onPostExecute(personList);
+                if (personList.size() > 0) {
+                    Card card = new Card.Builder(MainActivity.this)
+                            .withProvider(BigImageCardProvider.class)
+                            .setDrawable(drawRect(imgPath, personList, Color.BLUE))
+                            .setTitle("Person det")
+                            .endConfig()
+                            .build();
+                    mCard.add(card);
+                } else {
                     Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
+                updateCardListView();
+                dismissDialog();
+            }
 
-        addCardListView(cardrets);
-        dismissDialog();
+            @Override
+            protected List<VisionDetRet> doInBackground(Void... voids) {
+                // Init
+                if (mPersonDet == null) {
+                    mPersonDet = new PedestrianDet();
+                }
+
+
+                Timber.tag(TAG).d("Image path: " + imgPath);
+
+                List<VisionDetRet> personList = mPersonDet.detect(imgPath);
+                return personList;
+            }
+        }.execute();
     }
 
-    @UiThread
-    protected void addCardListView(List<Card> cardrets) {
-        for (Card each : cardrets) {
+    protected void updateCardListView() {
+        for (Card each : mCard) {
             mListView.add(each);
         }
     }
 
-    @UiThread
     protected void showDiaglog() {
         mDialog = ProgressDialog.show(MainActivity.this, "Wait", "Person and face detection", true);
     }
 
-    @UiThread
     protected void dismissDialog() {
         if (mDialog != null) {
             mDialog.dismiss();

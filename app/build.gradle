@@ -6,9 +6,9 @@ android {
 
     defaultConfig {
         applicationId "com.tzutalin.dlibtest"
-        minSdkVersion 21
-        targetSdkVersion  rootProject.ext.androidCompileSdkVersion
-        versionCode 1
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.releaseVersionCode
         versionName "${rootProject.ext.releaseVersionName}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -18,15 +18,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/res/raw']
+        }
+    }
 }
 
 
 buildscript {
     repositories {
         mavenCentral()
-    }
-    dependencies {
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
     }
 }
 
@@ -35,23 +38,18 @@ repositories {
     mavenLocal()
 }
 
-apply plugin: 'com.neenbedankt.android-apt'
-def AAVersion = '4.0.0'
-
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
-    compile "com.android.support:design:${rootProject.ext.androidSupportSdkVersion}"
-    compile 'com.github.dexafree:materiallist:3.0.1'
-    compile 'com.jakewharton.timber:timber:4.5.1'
-    compile project(':dlib')
-    apt "org.androidannotations:androidannotations:$AAVersion"
-    compile "org.androidannotations:androidannotations-api:$AAVersion"
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
+    implementation "com.android.support:design:${rootProject.ext.androidSupportSdkVersion}"
+    implementation 'com.github.dexafree:materiallist:3.0.1'
+    implementation 'com.jakewharton.timber:timber:4.5.1'
+    implementation project(':dlib')
 
     // Add AndroidJUnit
-    androidTestCompile "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
-    androidTestCompile 'com.android.support.test:runner:0.5'
-    androidTestCompile 'com.android.support.test:rules:0.5'
+    androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
+    androidTestImplementation 'com.android.support.test:runner:0.5'
+    androidTestImplementation 'com.android.support.test:rules:0.5'
     // Optional -- Hamcrest library
     androidTestCompile 'org.hamcrest:hamcrest-library:1.3'
 }

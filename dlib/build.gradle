@@ -9,9 +9,9 @@ android {
     buildToolsVersion "${rootProject.ext.androidBuildToolsVersion}"
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion rootProject.ext.androidCompileSdkVersion
-        versionCode 1
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.releaseVersionCode
         versionName "${rootProject.ext.releaseVersionName}"
     }
 
@@ -42,20 +42,16 @@ configurations {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
     javadocDeps "com.android.support:appcompat-v7:${rootProject.ext.androidSupportSdkVersion}"
-    compile "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
+    implementation "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
     javadocDeps "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
 }
 
 buildscript {
     repositories {
         mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.jakewharton.hugo:hugo-plugin:1.2.1'
     }
 }
 apply plugin: 'com.jakewharton.hugo'

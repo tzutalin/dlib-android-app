@@ -51,11 +51,11 @@ $ make ; make install
 #### Update shared lib (Optional)
 You can build shared library from [dlib-android](https://github.com/tzutalin/dlib-android)
 
-Copy the shared libray to ./dlib/src/main/jniLibs/
+Copy the shared library to ./dlib/src/main/jniLibs/
 
 ### Try directly
 
-Install the apk
+Download and install the apk
 
 `$ adb install demo/app-debug.apk`
 

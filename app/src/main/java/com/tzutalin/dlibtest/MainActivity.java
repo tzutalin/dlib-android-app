@@ -60,13 +60,14 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.CAMERA
     };
 
-    private String mTestImgPath;
     // UI
+    private ProgressDialog mDialog;
     private MaterialListView mListView;
     private FloatingActionButton mFabActionBt;
     private FloatingActionButton mFabCamActionBt;
     private Toolbar mToolbar;
 
+    private String mTestImgPath;
     private FaceDet mFaceDet;
     private PedestrianDet mPersonDet;
     private List<Card> mCard = new ArrayList<>();
@@ -92,10 +93,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void setupUI() {
-        mListView = (MaterialListView)findViewById(R.id.material_listview);
-        mFabActionBt = (FloatingActionButton)findViewById(R.id.fab);
-        mFabCamActionBt = (FloatingActionButton)findViewById(R.id.fab_cam);
-        mToolbar = (Toolbar)findViewById(R.id.toolbar);
+        mListView = (MaterialListView) findViewById(R.id.material_listview);
+        mFabActionBt = (FloatingActionButton) findViewById(R.id.fab);
+        mFabCamActionBt = (FloatingActionButton) findViewById(R.id.fab_cam);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
         mFabActionBt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -171,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
     protected void demoStaticImage() {
         if (mTestImgPath != null) {
             Timber.tag(TAG).d("demoStaticImage() launch a task to det");
-            runDetectAsync(mTestImgPath);
+            runDemosAsync(mTestImgPath);
         } else {
             Timber.tag(TAG).d("demoStaticImage() mTestImgPath is null, go to gallery");
             Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
                 mTestImgPath = cursor.getString(columnIndex);
                 cursor.close();
                 if (mTestImgPath != null) {
-                    runDetectAsync(mTestImgPath);
+                    runDemosAsync(mTestImgPath);
                     Toast.makeText(this, "Img Path:" + mTestImgPath, Toast.LENGTH_SHORT).show();
                 }
             } else {
@@ -219,15 +220,58 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================================
     // Tasks inner class
     // ==========================================================
-    private ProgressDialog mDialog;
 
     @NonNull
-    protected void runDetectAsync(@NonNull final String imgPath) {
+    private void runDemosAsync(@NonNull final String imgPath) {
+        demoPersonDet(imgPath);
+        demoFaceDet(imgPath);
+    }
+
+    private void demoPersonDet(final String imgPath) {
         new AsyncTask<Void, Void, List<VisionDetRet>>() {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                showDiaglog();
+            }
+
+            @Override
+            protected void onPostExecute(List<VisionDetRet> personList) {
+                super.onPostExecute(personList);
+                if (personList.size() > 0) {
+                    Card card = new Card.Builder(MainActivity.this)
+                            .withProvider(BigImageCardProvider.class)
+                            .setDrawable(drawRect(imgPath, personList, Color.BLUE))
+                            .setTitle("Person det")
+                            .endConfig()
+                            .build();
+                    mCard.add(card);
+                } else {
+                    Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_LONG).show();
+                }
+                updateCardListView();
+            }
+
+            @Override
+            protected List<VisionDetRet> doInBackground(Void... voids) {
+                // Init
+                if (mPersonDet == null) {
+                    mPersonDet = new PedestrianDet();
+                }
+
+                Timber.tag(TAG).d("Image path: " + imgPath);
+
+                List<VisionDetRet> personList = mPersonDet.detect(imgPath);
+                return personList;
+            }
+        }.execute();
+    }
+
+    private void demoFaceDet(final String imgPath) {
+        new AsyncTask<Void, Void, List<VisionDetRet>>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                showDiaglog("Detecting faces");
             }
 
             @Override
@@ -242,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
                             .build();
                     mCard.add(card);
                 } else {
-                    Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "No face", Toast.LENGTH_LONG).show();
                 }
                 updateCardListView();
                 dismissDialog();
@@ -270,66 +314,29 @@ public class MainActivity extends AppCompatActivity {
                 return faceList;
             }
         }.execute();
-
-        new AsyncTask<Void, Void, List<VisionDetRet>>() {
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                showDiaglog();
-            }
-
-            @Override
-            protected void onPostExecute(List<VisionDetRet> personList) {
-                super.onPostExecute(personList);
-                if (personList.size() > 0) {
-                    Card card = new Card.Builder(MainActivity.this)
-                            .withProvider(BigImageCardProvider.class)
-                            .setDrawable(drawRect(imgPath, personList, Color.BLUE))
-                            .setTitle("Person det")
-                            .endConfig()
-                            .build();
-                    mCard.add(card);
-                } else {
-                    Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
-                }
-                updateCardListView();
-                dismissDialog();
-            }
-
-            @Override
-            protected List<VisionDetRet> doInBackground(Void... voids) {
-                // Init
-                if (mPersonDet == null) {
-                    mPersonDet = new PedestrianDet();
-                }
-
-
-                Timber.tag(TAG).d("Image path: " + imgPath);
-
-                List<VisionDetRet> personList = mPersonDet.detect(imgPath);
-                return personList;
-            }
-        }.execute();
     }
 
-    protected void updateCardListView() {
+    private void updateCardListView() {
+        mListView.clearAll();
         for (Card each : mCard) {
             mListView.add(each);
         }
     }
 
-    protected void showDiaglog() {
-        mDialog = ProgressDialog.show(MainActivity.this, "Wait", "Person and face detection", true);
+    private void showDiaglog(String title) {
+        dismissDialog();
+        mDialog = ProgressDialog.show(MainActivity.this, title, "process..", true);
     }
 
-    protected void dismissDialog() {
+    private void dismissDialog() {
         if (mDialog != null) {
             mDialog.dismiss();
+            mDialog = null;
         }
     }
 
     @DebugLog
-    protected BitmapDrawable drawRect(String path, List<VisionDetRet> results, int color) {
+    private BitmapDrawable drawRect(String path, List<VisionDetRet> results, int color) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
         Bitmap bm = BitmapFactory.decodeFile(path, options);
@@ -385,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @DebugLog
-    protected Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+    private Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bm, newWidth, newHeight, true);
         return resizedBitmap;
     }
